@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from urllib.request import Request, urlopen
 
 
@@ -46,6 +46,7 @@ def search_stac(*, bbox=None, intersects=None, datetime=None,
             raise ValueError("cloud_cover_max must be between 0 and 100.")
         payload["query"] = {"eo:cloud_cover": {"lte": cloud_cover_max}}
 
+    query_summary = {k: v for k, v in payload.items() if k != "limit"}
     features = []
     url = endpoint.rstrip("/") + "/search"
     method = "POST"
@@ -66,7 +67,7 @@ def search_stac(*, bbox=None, intersects=None, datetime=None,
                           if link.get("rel") == "next" and link.get("href")), None)
         if not next_link:
             break
-        next_url = next_link["href"]
+        next_url = urljoin(url, next_link["href"])
         if urlparse(next_url).scheme != "https":
             raise STACError("Refusing non-HTTPS pagination URL.")
         url = next_url
@@ -86,6 +87,6 @@ def search_stac(*, bbox=None, intersects=None, datetime=None,
             "assets": {name: asset.get("href") for name, asset in (feature.get("assets") or {}).items()
                        if asset.get("href")},
         })
-    return {"endpoint": endpoint, "query": {k: v for k, v in payload.items() if k != "limit"},
+    return {"endpoint": endpoint, "query": query_summary,
             "returned_items": len(items), "items": items,
             "note": "Catalog metadata only. Assets have not been downloaded or processed."}
