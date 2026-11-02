@@ -90,12 +90,13 @@ def clip_raster(input_path: str | Path, geojson_path: str | Path,
             geometries = [transform_geom("EPSG:4326", src.crs, g) for g in geometries]
         try:
             image, transform = mask(src, geometries, crop=crop, filled=True,
-                                    nodata=src.nodata if src.nodata is not None else 0)
+                                    nodata=output_nodata)
         except ValueError as exc:
             raise RasterError(f"AOI does not overlap raster or geometry is invalid: {exc}") from exc
+        output_nodata = src.nodata if src.nodata is not None else 0
         profile = src.profile.copy()
         profile.update(height=image.shape[1], width=image.shape[2], transform=transform,
-                       compress="deflate")
+                       nodata=output_nodata, compress="deflate")
         with rasterio.open(output_path, "w", **profile) as dst:
             dst.write(image)
             dst.update_tags(source=str(input_path), clip_geometry=str(geojson_path),
