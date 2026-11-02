@@ -41,6 +41,7 @@ Use the same core instructions and methods in both. Models, tools, file limits, 
 ## Module routing
 - GIS/vector data: `docs/modules/GIS.md`
 - Satellite imagery/indices: `docs/modules/REMOTE_SENSING.md`
+- Public satellite catalog discovery: `docs/modules/STAC.md`
 - Variable-rate and management zones: `docs/modules/PRECISION_AGRICULTURE.md`
 - Weather/agrometeorology: `docs/modules/WEATHER.md`
 - Forestry: `docs/modules/FORESTRY.md`
