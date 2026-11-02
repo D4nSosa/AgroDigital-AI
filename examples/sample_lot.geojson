@@ -1,0 +1,12 @@
+{
+  "type": "FeatureCollection",
+  "name": "sample_lot",
+  "features": [{
+    "type": "Feature",
+    "properties": {"name": "Example field", "status": "illustrative"},
+    "geometry": {"type": "Polygon", "coordinates": [[
+      [-56.02, -27.98], [-56.01, -27.98], [-56.01, -27.97],
+      [-56.02, -27.97], [-56.02, -27.98]
+    ]]}
+  }]
+}

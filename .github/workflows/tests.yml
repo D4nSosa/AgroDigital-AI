@@ -1,0 +1,21 @@
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: CLI smoke tests
+        run: |
+          agrodigital check-geojson examples/sample_lot.geojson
+          agrodigital gdd --tmin 12 --tmax 28 --base 10
+          agrodigital rainfall 12.5 0 8 3.2
