@@ -11,7 +11,11 @@ class VectorError(ValueError):
 
 def reproject_geojson(input_path: str | Path, output_path: str | Path,
                       source_crs: str, target_crs: str) -> dict:
-    """Reproject GeoJSON coordinates with pyproj; source CRS must be explicit."""
+    """Transform coordinates with pyproj; output carries explicit non-RFC7946 CRS metadata.
+
+    GeoJSON consumers generally assume WGS84. For projected output, prefer a CRS-aware
+    container such as GeoPackage; this helper marks the coordinate system explicitly.
+    """
     try:
         from pyproj import Transformer
     except ImportError as exc:
@@ -47,9 +51,11 @@ def reproject_geojson(input_path: str | Path, output_path: str | Path,
         data["geometry"] = geometry(data.get("geometry"))
     else:
         data = geometry(data)
+    data["agrodigital:coordinate_reference_system"] = target_crs
     Path(output_path).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return {"output": str(output_path), "source_crs": source_crs,
-            "target_crs": target_crs, "axis_order": "x,y (always_xy)"}
+            "target_crs": target_crs, "axis_order": "x,y (always_xy)",
+            "warning": "Projected coordinates are not RFC 7946 WGS84 GeoJSON; CRS is recorded in an AgroDigital-AI foreign member."}
 
 
 def validate_topology(geojson_path: str | Path) -> dict:
