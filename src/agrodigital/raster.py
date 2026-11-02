@@ -88,12 +88,12 @@ def clip_raster(input_path: str | Path, geojson_path: str | Path,
             raise RasterError("Input raster has no CRS; clipping cannot safely transform coordinates.")
         if src.crs.to_epsg() != 4326:
             geometries = [transform_geom("EPSG:4326", src.crs, g) for g in geometries]
+        output_nodata = src.nodata if src.nodata is not None else 0
         try:
             image, transform = mask(src, geometries, crop=crop, filled=True,
                                     nodata=output_nodata)
         except ValueError as exc:
             raise RasterError(f"AOI does not overlap raster or geometry is invalid: {exc}") from exc
-        output_nodata = src.nodata if src.nodata is not None else 0
         profile = src.profile.copy()
         profile.update(height=image.shape[1], width=image.shape[2], transform=transform,
                        nodata=output_nodata, compress="deflate")
