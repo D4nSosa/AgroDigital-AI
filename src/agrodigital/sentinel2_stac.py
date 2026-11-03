@@ -1,11 +1,15 @@
 """End-to-end Sentinel-2 processing from a public STAC Item."""
 from __future__ import annotations
 
+import json
 import re
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
 from .download import download_asset
+from .geo import validate_geojson
+from .raster import clip_raster
 from .sentinel2 import calculate_sentinel2_ndvi
 from .stac import DEFAULT_STAC_URL, get_stac_item
 
@@ -101,12 +105,19 @@ def process_sentinel2_stac_item(
     collection: str = "sentinel-2-l2a", endpoint: str = DEFAULT_STAC_URL,
     max_bytes_per_asset: int = 2_000_000_000, timeout: int = 60,
     use_scl: bool = True, overwrite: bool = False,
+    aoi_geojson: dict | None = None,
 ) -> dict:
-    """Download red/NIR/(optional SCL) assets from one STAC Item and calculate NDVI.
+    """Download red/NIR/(optional SCL), calculate NDVI and optionally clip to a GeoJSON AOI.
 
     SCL is resampled to the red/NIR grid with nearest-neighbour when needed.
-    The scene is not clipped to an AOI and no atmospheric correction is performed.
+    AOI coordinates are assumed RFC 7946 WGS84 longitude/latitude.
     """
+    if aoi_geojson is not None:
+        try:
+            validate_geojson(aoi_geojson)
+        except ValueError as exc:
+            raise Sentinel2STACError(f"Invalid AOI GeoJSON: {exc}") from exc
+
     item = get_stac_item(item_id, collection=collection, endpoint=endpoint, timeout=timeout)
     assets = item.get("assets") or {}
     red_key = "red" if "red" in assets else "B04" if "B04" in assets else None
@@ -117,6 +128,8 @@ def process_sentinel2_stac_item(
     if use_scl and not scl_key:
         raise Sentinel2STACError("SCL masking was requested but the STAC Item has no SCL asset.")
 
+    red_params = _reflectance_parameters(item, red_key)
+    nir_params = _reflectance_parameters(item, nir_key)
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     safe_id = re.sub(r"[^A-Za-z0-9._-]+", "_", str(item.get("id", item_id)))
@@ -130,22 +143,37 @@ def process_sentinel2_stac_item(
             timeout=timeout, overwrite=overwrite,
         )
 
-    red_params = _reflectance_parameters(item, red_key)
-    nir_params = _reflectance_parameters(item, nir_key)
     scl_aligned_path = None
     if "scl" in downloaded:
         scl_aligned_path = _align_scl_to_red_grid(
             downloaded["scl"]["path"], downloaded["red"]["path"],
             destination / f"{safe_id}_scl_aligned.tif",
         )
-    ndvi_path = Path(output_path) if output_path else destination / f"{safe_id}_ndvi.tif"
-    processing = calculate_sentinel2_ndvi(
-        downloaded["red"]["path"], downloaded["nir"]["path"], ndvi_path,
+
+    final_path = Path(output_path) if output_path else destination / (
+        f"{safe_id}_ndvi_aoi.tif" if aoi_geojson is not None else f"{safe_id}_ndvi.tif"
+    )
+    final_path.parent.mkdir(parents=True, exist_ok=True)
+    full_path = final_path.with_name(final_path.stem + "_full" + final_path.suffix) if aoi_geojson is not None else final_path
+    scene_processing = calculate_sentinel2_ndvi(
+        downloaded["red"]["path"], downloaded["nir"]["path"], full_path,
         scale_factor=red_params["scale_factor"],
         nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
         scl_path=scl_aligned_path,
     )
+    aoi_clip = None
+    if aoi_geojson is not None:
+        with tempfile.TemporaryDirectory(prefix="agrodigital-aoi-") as temp_dir:
+            aoi_path = Path(temp_dir) / "aoi.geojson"
+            aoi_path.write_text(json.dumps(aoi_geojson), encoding="utf-8")
+            aoi_clip = clip_raster(full_path, aoi_path, final_path, crop=True)
+    processing = {
+        "scene_ndvi": scene_processing,
+        "aoi_clip": aoi_clip,
+        "output": str(final_path),
+        "aoi_applied": aoi_geojson is not None,
+    }
     license_links = [link.get("href") for link in item.get("links", [])
                      if link.get("rel") == "license" and link.get("href")]
     properties = item.get("properties") or {}
@@ -168,8 +196,9 @@ def process_sentinel2_stac_item(
             "method": "NDVI = (NIR reflectance - red reflectance) / (NIR reflectance + red reflectance)",
             "reflectance_rule": "reflectance = DN * STAC raster:bands scale + metadata-derived offset",
             "scl_resampling": "nearest-neighbour to red-band grid when required",
+            "aoi_applied": aoi_geojson is not None,
             "limitations": [
-                "Native red/NIR scene grid; no AOI clipping or temporal compositing.",
+                "One scene only; no temporal compositing or change detection.",
                 "SCL class exclusion is not a guarantee of cloud-free pixels.",
                 "No atmospheric correction is performed by this workflow.",
                 "Verify product metadata, scene quality and license before operational use.",
