@@ -1,51 +1,79 @@
 # AgroDigital-AI
 
-Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing and agrometeorology. The project is a portable, modular alternative workflow layer around open data and Python—not a claim that it replaces every feature of QGIS or Google Earth Engine.
+Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing, agrometeorology and AI agents. It combines deterministic Python tools with an optional Model Context Protocol (MCP) server so compatible AI clients can invoke supported workflows.
 
-## Install
-Python 3.10+.
+It is a modular workflow layer around open data and Python—not a claim that it replaces every feature of QGIS or Google Earth Engine.
 
-Core:
-\`\`\`bash
-python -m pip install -e .
-\`\`\`
-Full optional geospatial stack:
-\`\`\`bash
+## AI-native use (v0.4)
+
+Give an AI the repository context and attach an image or data file. For tool execution, connect the optional MCP server in an MCP-compatible client.
+
+Install the full runtime:
+
+~~~bash
 python -m pip install -e ".[full]"
-\`\`\`
+~~~
+
+Run the MCP server:
+
+~~~bash
+agrodigital-mcp
+~~~
+
+Example client configuration: examples/mcp-config.json. Setup and usage: docs/AI_AGENT_GUIDE.md.
+
+The AI interprets ordinary photos. AgroDigital-AI tools validate GeoJSON, inspect rasters, search STAC, download and process supported Sentinel-2 assets, and calculate supplied weather/agronomic values. An ordinary photograph is not a georeferenced raster and cannot establish soil chemistry or yield.
+
+## Install Python core
+
+~~~bash
+python -m pip install -e .
+~~~
+
+Full optional stack and MCP:
+
+~~~bash
+python -m pip install -e ".[full]"
+~~~
 
 ## Current workflows
-\`\`\`bash
+
+~~~bash
 agrodigital capabilities
 agrodigital check-geojson examples/sample_lot.geojson
 agrodigital stac-search --bbox -56 -29 -54 -27 --datetime 2026-01-01T00:00:00Z/2026-02-01T00:00:00Z --collections sentinel-2-l2a --max-items 20
-agrodigital download-asset "https://provider.example/path/B04.tif" B04.tif --max-bytes 500000000
-agrodigital sentinel2-ndvi --red B04.tif --nir B08.tif --scl SCL.tif --output ndvi.tif --scale-factor 10000
-agrodigital raster-info ndvi.tif
-\`\`\`
-The download example uses a placeholder URL; replace it with an authorized asset URL returned by a catalog/provider. STAC discovery returns metadata and asset references; it does not automatically download a selected item.
+agrodigital sentinel2-stac-ndvi --item-id "STAC_ITEM_ID" --output-dir ./results
+agrodigital raster-info ./results/STAC_ITEM_ID_ndvi.tif
+~~~
+
+The STAC-to-NDVI command downloads the red/NIR/SCL assets for one selected public Item, derives reflectance scaling/offsets from Item metadata, aligns categorical SCL to the red/NIR grid with nearest-neighbour if needed, and calculates NDVI. Review the Item's license, date, cloud cover and output provenance. The output is a scene-level index, not a yield or crop-health measurement.
 
 ## Implemented capabilities
+
 - GeoJSON structural checks and coordinate-range validation.
 - Optional topology validation and vector reprojection with Shapely/PyProj.
 - GeoTIFF metadata inspection, normalized-difference raster calculation, AOI clipping/masking and raster reprojection with Rasterio.
-- Public STAC API search by bbox or GeoJSON intersection, date, collection and cloud-cover metadata.
+- Public STAC metadata search and complete Item retrieval.
 - Bounded HTTPS asset download with optional SHA-256 verification.
-- Sentinel-2 L2A NDVI from separate, aligned red/NIR GeoTIFFs, with optional SCL class masking and explicit scale/offset parameters.
+- STAC-driven Sentinel-2 L2A red/NIR/SCL download and NDVI processing.
+- Sentinel-2 NDVI from supplied aligned rasters, with independent band scale factors and offsets.
 - NDVI/NDWI calculations from supplied values/arrays; GDD and rainfall calculations.
-- CLI, unit tests, provenance tags and GitHub Actions.
+- Optional MCP server with typed tools for agent workflows.
+- Unit tests and GitHub Actions.
 
 ## Important limitations
-- No automatic STAC item/asset selection, SAFE archive unpacking, signed-URL refresh, persistent cache or resumable downloads.
-- Sentinel-2 inputs must already be downloaded and aligned; scale factor and offsets must be checked against source metadata.
-- SCL masking is class-based and does not guarantee cloud-free pixels.
-- No atmospheric correction, advanced cloud/shadow algorithm, Sentinel-1 processing, temporal composites or COG generation.
-- No full QGIS-style desktop GUI or GEE-style distributed compute.
-- No automatic geometry repair.
+
+- MCP is not a universal AI connection. The client must support MCP, be configured with the server and share access to files.
+- The initial MCP server is local stdio; it is not a hosted public endpoint.
+- STAC scene processing uses one scene and its native red/NIR grid; no AOI clipping, temporal compositing or change detection.
+- SCL nearest-neighbour alignment is categorical resampling, not advanced cloud/shadow detection.
+- No atmospheric correction, Sentinel-1 processing, validated crop/yield models, automatic prescriptions or full QGIS/GEE-equivalent GUI.
+- Real-scene end-to-end validation is a separate acceptance check; synthetic unit tests do not prove operational accuracy.
 
 ## Principles
-Free/open core; no mandatory paid API or private key. Never fabricate data access, measurements, maps or execution. Separate observed, derived, estimated, forecast, modelled and illustrative values. Record provenance, dates, CRS, resolution, units, method, assumptions and limitations. Prefer open formats and reproducible workflows.
 
-See [SKILL.md](SKILL.md), [roadmap](docs/ROADMAP.md), [data policy](docs/DATA_POLICY.md), and the module guides under [docs/modules](docs/modules/).
+Free/open core; no mandatory paid API or private key. Never fabricate data access, measurements, maps or execution. Separate observed, derived, estimated, forecast, modelled and illustrative values. Record provenance, dates, CRS, resolution, units, method, assumptions and limitations. Prefer open formats.
 
-MIT License. See [LICENSE](LICENSE).
+See SKILL.md, docs/ROADMAP.md, docs/DATA_POLICY.md, docs/AI_AGENT_GUIDE.md, and docs/modules/.
+
+MIT License. See LICENSE.
