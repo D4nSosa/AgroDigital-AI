@@ -43,6 +43,13 @@ class Sentinel2Tests(unittest.TestCase):
             self.assertAlmostEqual(float(values[1, 0]), 0.5, places=6)
             self.assertEqual(float(values[1, 1]), -9999.0)
 
+    def test_supports_independent_band_scale_factors(self):
+        output = self.root / "different-scale.tif"
+        calculate_sentinel2_ndvi(self.red, self.nir, output,
+                                 scale_factor=10000, nir_scale_factor=20000)
+        with rasterio.open(output) as src:
+            self.assertAlmostEqual(float(src.read(1)[0, 0]), 0.2, places=6)
+
     def test_rejects_invalid_scale(self):
         with self.assertRaises(Sentinel2Error):
             calculate_sentinel2_ndvi(self.red, self.nir, self.root / "bad.tif", scale_factor=0)
