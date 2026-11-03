@@ -69,12 +69,21 @@ def build_parser():
     s2.add_argument("--nir", required=True, help="NIR band B08 GeoTIFF")
     s2.add_argument("--scl", help="Optional aligned Scene Classification Layer GeoTIFF")
     s2.add_argument("--output", required=True)
-    s2.add_argument("--scale-factor", type=float, required=True,
-                    help="Explicit product DN scale factor; inspect source metadata")
+    s2.add_argument("--scale-factor", type=float, required=True)
+    s2.add_argument("--nir-scale-factor", type=float)
     s2.add_argument("--red-offset", type=float, default=0.0)
     s2.add_argument("--nir-offset", type=float, default=0.0)
-    s2.add_argument("--exclude-scl", type=int, nargs="+", default=[0, 1, 3, 8, 9, 10, 11],
-                    help="SCL classes to mask; default: 0 1 3 8 9 10 11")
+    s2.add_argument("--exclude-scl", type=int, nargs="+", default=[0, 1, 3, 8, 9, 10, 11])
+
+    s2stac = sub.add_parser("sentinel2-stac-ndvi", help="Download and process one Sentinel-2 STAC Item")
+    s2stac.add_argument("--item-id", required=True)
+    s2stac.add_argument("--collection", default="sentinel-2-l2a")
+    s2stac.add_argument("--endpoint", default="https://earth-search.aws.element84.com/v1")
+    s2stac.add_argument("--output-dir", required=True)
+    s2stac.add_argument("--output")
+    s2stac.add_argument("--max-bytes-per-asset", type=int, default=2_000_000_000)
+    s2stac.add_argument("--no-scl", action="store_true")
+    s2stac.add_argument("--overwrite", action="store_true")
     return parser
 
 
@@ -122,8 +131,16 @@ def main(argv=None):
             from .sentinel2 import calculate_sentinel2_ndvi
             result = calculate_sentinel2_ndvi(
                 args.red, args.nir, args.output, scale_factor=args.scale_factor,
-                red_offset=args.red_offset, nir_offset=args.nir_offset, scl_path=args.scl,
+                nir_scale_factor=args.nir_scale_factor, red_offset=args.red_offset,
+                nir_offset=args.nir_offset, scl_path=args.scl,
                 excluded_scl_classes=args.exclude_scl)
+        elif args.command == "sentinel2-stac-ndvi":
+            from .sentinel2_stac import process_sentinel2_stac_item
+            result = process_sentinel2_stac_item(
+                args.item_id, args.output_dir, output_path=args.output,
+                collection=args.collection, endpoint=args.endpoint,
+                max_bytes_per_asset=args.max_bytes_per_asset,
+                use_scl=not args.no_scl, overwrite=args.overwrite)
         else:
             raise ValueError(f"Unsupported command: {args.command}")
         print(json.dumps(result, indent=2, ensure_ascii=False))
