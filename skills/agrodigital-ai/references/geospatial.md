@@ -24,9 +24,6 @@ Confirm that AOI and raster overlap, CRS match, pixel inclusion rule is stated a
 - Before machine use, verify controller/vendor format, coordinate system, field boundary, rate units, file encoding, grid/cell size, legends and machine calibration. Export to a generic format (GeoPackage, GeoJSON, CSV or GeoTIFF) only when appropriate; proprietary controller formats require their own specification.
 - Preserve an auditable source-to-output trail and keep draft files separate from approved operational files.
 
-## Raster
-Inspect dimensions, band count, data type, CRS, transform, pixel size, nodata, scale/offset, units, compression and bounds. Check alignment before pixel-wise operations. Categorical rasters require nearest-neighbour resampling; continuous data may use an appropriate continuous resampler.
-
 ## Formats
 - GeoJSON: vector geometry and properties.
 - GeoPackage: multi-layer vector container.
