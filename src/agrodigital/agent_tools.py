@@ -65,7 +65,7 @@ def plan_analysis(objective: str, *, aoi_geojson: dict | None = None,
         "missing_or_uncertain": missing,
         "guardrails": [
             "An ordinary photograph cannot establish soil chemistry, nutrient status or yield.",
-            "A vegetation index is not a direct measurement of yield, species or plant health.",
+            "A vegetation index is not a direct measurement of yield, soil moisture or species.",
             "Do not issue high-consequence input or machinery prescriptions without local measurements and qualified review.",
         ],
         "execution": "No geospatial processing or external data retrieval was performed by this planning tool.",
@@ -78,13 +78,17 @@ def get_capabilities() -> dict:
     ).to_dict()
 
 
-def search_satellite_scenes(bbox: list[float], datetime_range: str, *,
+def search_satellite_scenes(*, bbox: list[float] | None = None,
+                            intersects: dict | None = None,
+                            datetime_range: str,
                             collections: list[str] | None = None,
                             cloud_cover_max: float | None = None,
                             max_items: int = 10,
                             endpoint: str = DEFAULT_STAC_URL) -> dict:
+    if (bbox is None) == (intersects is None):
+        raise ValueError("Provide exactly one of bbox or intersects.")
     return search_stac(
-        bbox=bbox, datetime=datetime_range,
+        bbox=bbox, intersects=intersects, datetime=datetime_range,
         collections=collections or ["sentinel-2-l2a"],
         cloud_cover_max=cloud_cover_max, max_items=max_items, endpoint=endpoint,
     )
@@ -95,11 +99,12 @@ def process_sentinel2_scene(item_id: str, output_dir: str, *,
                             collection: str = "sentinel-2-l2a",
                             endpoint: str = DEFAULT_STAC_URL,
                             max_bytes_per_asset: int = 2_000_000_000,
-                            use_scl: bool = True, overwrite: bool = False) -> dict:
+                            use_scl: bool = True, overwrite: bool = False,
+                            aoi_geojson: dict | None = None) -> dict:
     return process_sentinel2_stac_item(
         item_id, output_dir, output_path=output_path, collection=collection,
         endpoint=endpoint, max_bytes_per_asset=max_bytes_per_asset,
-        use_scl=use_scl, overwrite=overwrite,
+        use_scl=use_scl, overwrite=overwrite, aoi_geojson=aoi_geojson,
     )
 
 
