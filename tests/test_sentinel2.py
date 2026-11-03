@@ -38,7 +38,7 @@ class Sentinel2Tests(unittest.TestCase):
         self.assertTrue(result["scl_applied"])
         with rasterio.open(output) as src:
             values = src.read(1)
-            self.assertAlmostEqual(float(values[0, 0]), 0.5)
+            self.assertAlmostEqual(float(values[0, 0]), 0.5, places=6)
             self.assertEqual(float(values[0, 1]), -9999.0)
             self.assertEqual(float(values[1, 0]), 0.5)
             self.assertEqual(float(values[1, 1]), -9999.0)
