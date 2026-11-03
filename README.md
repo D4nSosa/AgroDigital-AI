@@ -46,7 +46,7 @@ agrodigital sentinel2-stac-ndvi --item-id "STAC_ITEM_ID" --output-dir ./results
 agrodigital raster-info ./results/STAC_ITEM_ID_ndvi.tif
 ~~~
 
-The STAC-to-NDVI command downloads the red/NIR/SCL assets for one selected public Item, derives reflectance scaling/offsets from Item metadata, aligns categorical SCL to the red/NIR grid with nearest-neighbour if needed, and calculates NDVI. Review the Item's license, date, cloud cover and output provenance. The output is a scene-level index, not a yield or crop-health measurement.
+The STAC-to-NDVI workflow downloads the red/NIR/SCL assets for one selected public Item, derives reflectance scaling/offsets from Item metadata, aligns categorical SCL to the red/NIR grid with nearest-neighbour if needed, and calculates NDVI. Through the Python agent API/MCP tool, the result can additionally be clipped to a supplied GeoJSON AOI. The CLI command currently processes the full scene. Review the Item's license, date, cloud cover and output provenance. The output is a scene-level index, not a yield or crop-health measurement.
 
 ## Implemented capabilities
 
@@ -55,20 +55,22 @@ The STAC-to-NDVI command downloads the red/NIR/SCL assets for one selected publi
 - GeoTIFF metadata inspection, normalized-difference raster calculation, AOI clipping/masking and raster reprojection with Rasterio.
 - Public STAC metadata search and complete Item retrieval.
 - Bounded HTTPS asset download with optional SHA-256 verification.
-- STAC-driven Sentinel-2 L2A red/NIR/SCL download and NDVI processing.
+- STAC-driven Sentinel-2 L2A red/NIR/SCL download and NDVI processing, with optional GeoJSON AOI clipping through the agent API.
 - Sentinel-2 NDVI from supplied aligned rasters, with independent band scale factors and offsets.
 - NDVI/NDWI calculations from supplied values/arrays; GDD and rainfall calculations.
 - Optional MCP server with typed tools for agent workflows.
-- Unit tests and GitHub Actions.
+- Unit tests, MCP SDK client handshake/tool-call test, and GitHub Actions.
 
 ## Important limitations
 
 - MCP is not a universal AI connection. The client must support MCP, be configured with the server and share access to files.
 - The initial MCP server is local stdio; it is not a hosted public endpoint.
-- STAC scene processing uses one scene and its native red/NIR grid; no AOI clipping, temporal compositing or change detection.
+- STAC processing handles one selected scene. It does not produce temporal composites or change detection.
+- AOI clipping is available through the agent API/MCP tool; the current STAC CLI command does not expose an AOI argument.
 - SCL nearest-neighbour alignment is categorical resampling, not advanced cloud/shadow detection.
 - No atmospheric correction, Sentinel-1 processing, validated crop/yield models, automatic prescriptions or full QGIS/GEE-equivalent GUI.
 - Real-scene end-to-end validation is a separate acceptance check; synthetic unit tests do not prove operational accuracy.
+- The MCP integration test verifies protocol handshake and tool calls using the official Python SDK. An attached-image + AOI workflow still needs acceptance testing in a user-facing AI client.
 
 ## Principles
 
