@@ -23,6 +23,7 @@ Roadmap items are targets, not claims of existing functionality.
 - [x] Independent red/NIR scaling and offsets.
 - [x] Nearest-neighbour alignment of categorical SCL to the red/NIR grid.
 - [x] NDVI output with item, source, parameter and limitation provenance.
+- [x] Optional clipping of NDVI to a supplied GeoJSON AOI.
 - [x] CLI workflow, unit tests and CI.
 - [ ] Run and archive a real public Sentinel-2 scene end-to-end; verify scene metadata, downloaded files, grid alignment and output values independently. Synthetic tests are not a substitute for this acceptance check.
 
@@ -32,12 +33,12 @@ Roadmap items are targets, not claims of existing functionality.
 - [x] Optional MCP stdio server with typed tools.
 - [x] MCP client configuration example and agent usage guide.
 - [x] Natural-language and multimodal input contract for image + geospatial evidence.
+- [x] GeoJSON AOI input for scene search and clipped processing.
 - [ ] Validate MCP handshake and tool calls in at least one real MCP client.
 - [ ] Test an attached user image plus a GeoJSON AOI through a complete agent workflow.
 - [ ] Add hosted/remote MCP deployment only after a concrete hosting and access-control design.
 
 ## v0.5 agroforestry and decision support
-- [ ] AOI clipping integrated into STAC Sentinel-2 workflow.
 - [ ] Temporal composites, per-pixel change detection and zonal statistics.
 - [ ] Sentinel-1 GRD preprocessing and comparable backscatter time series.
 - [ ] Landsat search and processing.
