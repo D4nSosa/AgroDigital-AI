@@ -15,43 +15,46 @@ Roadmap items are targets, not claims of existing functionality.
 - [x] Public STAC metadata search.
 - [x] CLI, docs, tests and provenance tags.
 
-## v0.3 bounded asset download and Sentinel-2 starter workflow — implementation complete; real-scene validation pending
-- [x] HTTPS asset download with maximum-size guard, atomic temporary file and optional SHA-256 verification.
-- [x] Sentinel-2 L2A NDVI from separate aligned B04/B08 rasters.
-- [x] Optional SCL class masking with explicit configurable exclusions.
-- [x] Explicit scale factor and per-band offsets; reject unaligned inputs.
-- [x] Unit tests and CLI commands.
-- [ ] Validate against a real, openly licensed Sentinel-2 scene and record product metadata, scale/offset and expected values.
-- [ ] Add persistent cache, resumable transfers and robust STAC asset-selection workflow.
+## v0.3 Sentinel-2 ingestion pipeline — implementation complete; real-scene acceptance pending
+- [x] HTTPS asset download with byte ceiling, atomic write and optional SHA-256.
+- [x] Complete STAC Item retrieval and asset metadata exposure.
+- [x] STAC Item to red/NIR/SCL asset selection and download.
+- [x] Reflectance scale/offset extraction with Earth Search BOA offset handling.
+- [x] Independent red/NIR scaling and offsets.
+- [x] Nearest-neighbour alignment of categorical SCL to the red/NIR grid.
+- [x] NDVI output with item, source, parameter and limitation provenance.
+- [x] CLI workflow, unit tests and CI.
+- [ ] Run and archive a real public Sentinel-2 scene end-to-end; verify scene metadata, downloaded files, grid alignment and output values independently. Synthetic tests are not a substitute for this acceptance check.
 
-## v0.4 remote-sensing pipelines
-- [ ] STAC item/asset selection and automated, license-aware downloads.
-- [ ] SAFE/COG ingestion, product metadata parsing and scale/offset discovery.
-- [ ] Cloud/shadow quality assessment and validated masking.
-- [ ] Sentinel-1 GRD preprocessing and comparable backscatter time series.
-- [ ] Landsat collection search and processing.
-- [ ] Temporal composites, per-pixel change detection and zonal statistics.
-- [ ] COG export/validation and reproducible manifests.
+## v0.4 AI-native agent interface — implementation target
+- [x] Evidence-aware analysis planning tool.
+- [x] Provider-neutral agent tool functions.
+- [x] Optional MCP stdio server with typed tools.
+- [x] MCP client configuration example and agent usage guide.
+- [x] Natural-language and multimodal input contract for image + geospatial evidence.
+- [ ] Validate MCP handshake and tool calls in at least one real MCP client.
+- [ ] Test an attached user image plus a GeoJSON AOI through a complete agent workflow.
+- [ ] Add hosted/remote MCP deployment only after a concrete hosting and access-control design.
 
 ## v0.5 agroforestry and decision support
-- [ ] Forest plantation monitoring, stand metrics and disturbance alerts.
-- [ ] Field/plot time series, vegetation and water indices, seasonal summaries.
-- [ ] Weather observations/forecast adapters with source/timezone validation.
-- [ ] Terrain, slope, aspect, hydrology and watershed workflows.
-- [ ] Management zones with ground-truth requirements and explainable methods.
-- [ ] Prescription schema validation and equipment-specific exports.
+- [ ] AOI clipping integrated into STAC Sentinel-2 workflow.
+- [ ] Temporal composites, per-pixel change detection and zonal statistics.
+- [ ] Sentinel-1 GRD preprocessing and comparable backscatter time series.
+- [ ] Landsat search and processing.
+- [ ] Weather observation/forecast adapters with source/timezone validation.
+- [ ] Forest plantation monitoring and disturbance indicators.
+- [ ] Explainable suitability and management-zone workflows with ground-truth requirements.
 
 ## v0.6 usable application
-- [ ] Lightweight web map and layer manager, optimized for mobile and low-bandwidth use.
-- [ ] Local/Colab/desktop execution profiles and job progress.
-- [ ] Project files, reproducible workflows and export bundles.
+- [ ] Lightweight mobile web map and layer manager.
+- [ ] Job progress, project files and reproducible export bundles.
 - [ ] User testing with real agroforestry operations.
 
 ## v1.0 platform
 - [ ] End-to-end public-data pipelines and benchmarks.
-- [ ] Optional integrations and a documented plugin/adapter interface.
+- [ ] Optional integrations and documented adapter interface.
 - [ ] Reproducibility, accuracy and performance evaluation against established GIS workflows.
 - [ ] Documentation and examples for Argentina and broader South America.
 
 ## Long-term boundary
-AgroDigital-AI can become a capable open geospatial workbench and a focused remote-sensing processing platform. Matching the full breadth of QGIS or the distributed compute infrastructure of Earth Engine is a multi-year effort; avoid claiming feature parity before benchmarks and user validation.
+AgroDigital-AI can become a capable open geospatial workbench and focused remote-sensing processing platform. Matching the full breadth of QGIS or distributed compute infrastructure of Earth Engine is a multi-year effort; avoid claiming feature parity before benchmarks and user validation.
