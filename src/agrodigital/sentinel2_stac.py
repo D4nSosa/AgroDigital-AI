@@ -29,16 +29,19 @@ def _reflectance_parameters(item: dict, asset_key: str) -> dict:
     asset = item["assets"][asset_key]
     raster_bands = asset.get("raster:bands") or []
     band = raster_bands[0] if raster_bands else {}
-    scale = band.get("scale", 0.0001)
+    if band.get("scale") is None:
+        raise Sentinel2STACError(
+            f"Asset '{asset_key}' has no raster:bands scale metadata; refusing to guess reflectance scaling."
+        )
     try:
-        scale = float(scale)
+        scale = float(band["scale"])
     except (TypeError, ValueError) as exc:
         raise Sentinel2STACError(f"Invalid raster:bands scale for '{asset_key}'.") from exc
     if scale <= 0:
         raise Sentinel2STACError(f"Non-positive raster:bands scale for '{asset_key}'.")
     properties = item.get("properties") or {}
-    if "earthsearch:boa_offset_applied" in properties:
-        offset = 0.0 if properties["earthsearch:boa_offset_applied"] is True else -1000.0 * scale
+    if isinstance(properties.get("earthsearch:boa_offset_applied"), bool):
+        offset = 0.0 if properties["earthsearch:boa_offset_applied"] else -1000.0 * scale
         rule = "earthsearch:boa_offset_applied"
     elif properties.get("s2:processing_baseline") is not None:
         try:
@@ -46,14 +49,51 @@ def _reflectance_parameters(item: dict, asset_key: str) -> dict:
             offset = -1000.0 * scale if baseline >= 4.0 else 0.0
             rule = "s2:processing_baseline"
         except (TypeError, ValueError):
-            offset = float(band.get("offset", 0.0) or 0.0)
+            offset = float(band.get("offset") or 0.0)
             rule = "raster:bands.offset fallback; baseline unparseable"
     else:
-        offset = float(band.get("offset", 0.0) or 0.0)
+        offset = float(band.get("offset") or 0.0)
         rule = "raster:bands.offset or zero"
     return {"scale_factor": 1.0 / scale, "offset": offset,
             "source_scale": scale, "source_offset": band.get("offset"),
             "offset_rule": rule}
+
+
+def _align_scl_to_red_grid(scl_path: str | Path, red_path: str | Path,
+                           output_path: str | Path) -> str:
+    """Nearest-neighbour align categorical SCL classes to the red-band grid."""
+    import rasterio
+    from rasterio.warp import reproject, Resampling
+
+    with rasterio.open(red_path) as red, rasterio.open(scl_path) as scl:
+        same_grid = (
+            red.width == scl.width and red.height == scl.height
+            and red.transform == scl.transform and red.crs == scl.crs
+        )
+        if same_grid:
+            return str(scl_path)
+        if red.crs is None or scl.crs is None:
+            raise Sentinel2STACError("Cannot align SCL because red or SCL raster has no CRS.")
+        nodata = scl.nodata if scl.nodata is not None else 0
+        profile = red.profile.copy()
+        profile.update(driver="GTiff", count=1, dtype=scl.dtypes[0],
+                       nodata=nodata, compress="deflate")
+        with rasterio.open(output_path, "w", **profile) as dst:
+            reproject(
+                source=rasterio.band(scl, 1),
+                destination=rasterio.band(dst, 1),
+                src_transform=scl.transform, src_crs=scl.crs,
+                src_nodata=scl.nodata,
+                dst_transform=red.transform, dst_crs=red.crs,
+                dst_nodata=nodata, resampling=Resampling.nearest,
+            )
+            dst.update_tags(
+                software="AgroDigital-AI",
+                method="nearest-neighbour categorical resampling",
+                source_scl=str(scl_path),
+                target_grid=str(red_path),
+            )
+    return str(output_path)
 
 
 def process_sentinel2_stac_item(
@@ -64,8 +104,8 @@ def process_sentinel2_stac_item(
 ) -> dict:
     """Download red/NIR/(optional SCL) assets from one STAC Item and calculate NDVI.
 
-    The scene is processed at its native grid. This function does not clip to an AOI,
-    resample, perform atmospheric correction or guarantee cloud-free pixels.
+    SCL is resampled to the red/NIR grid with nearest-neighbour when needed.
+    The scene is not clipped to an AOI and no atmospheric correction is performed.
     """
     item = get_stac_item(item_id, collection=collection, endpoint=endpoint, timeout=timeout)
     assets = item.get("assets") or {}
@@ -92,12 +132,19 @@ def process_sentinel2_stac_item(
 
     red_params = _reflectance_parameters(item, red_key)
     nir_params = _reflectance_parameters(item, nir_key)
+    scl_aligned_path = None
+    if "scl" in downloaded:
+        scl_aligned_path = _align_scl_to_red_grid(
+            downloaded["scl"]["path"], downloaded["red"]["path"],
+            destination / f"{safe_id}_scl_aligned.tif",
+        )
     ndvi_path = Path(output_path) if output_path else destination / f"{safe_id}_ndvi.tif"
     processing = calculate_sentinel2_ndvi(
         downloaded["red"]["path"], downloaded["nir"]["path"], ndvi_path,
         scale_factor=red_params["scale_factor"],
+        nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
-        scl_path=downloaded["scl"]["path"] if "scl" in downloaded else None,
+        scl_path=scl_aligned_path,
     )
     license_links = [link.get("href") for link in item.get("links", [])
                      if link.get("rel") == "license" and link.get("href")]
@@ -109,6 +156,7 @@ def process_sentinel2_stac_item(
                  "cloud_cover_percent": properties.get("eo:cloud_cover"),
                  "bbox": item.get("bbox"), "license_urls": license_links},
         "assets_downloaded": downloaded,
+        "scl_aligned_path": scl_aligned_path,
         "reflectance_parameters": {"red": red_params, "nir": nir_params},
         "processing": processing,
         "provenance": {
@@ -119,11 +167,12 @@ def process_sentinel2_stac_item(
             "cloud_cover_percent": properties.get("eo:cloud_cover"),
             "method": "NDVI = (NIR reflectance - red reflectance) / (NIR reflectance + red reflectance)",
             "reflectance_rule": "reflectance = DN * STAC raster:bands scale + metadata-derived offset",
+            "scl_resampling": "nearest-neighbour to red-band grid when required",
             "limitations": [
-                "Native scene grid; no AOI clipping or resampling.",
+                "Native red/NIR scene grid; no AOI clipping or temporal compositing.",
                 "SCL class exclusion is not a guarantee of cloud-free pixels.",
                 "No atmospheric correction is performed by this workflow.",
-                "Verify product metadata and license before operational use.",
+                "Verify product metadata, scene quality and license before operational use.",
             ],
         },
     }
