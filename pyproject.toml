@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agrodigital-ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "Open modular AgTech, GIS and remote-sensing toolkit"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [{name = "Dante Sosa"}]
-keywords = ["agriculture", "agtech", "gis", "remote-sensing", "forestry", "agrometeorology", "stac", "raster"]
+keywords = ["agriculture", "agtech", "gis", "remote-sensing", "forestry", "agrometeorology", "stac", "raster", "sentinel-2"]
 classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Operating System :: OS Independent"]
 
 [project.optional-dependencies]
