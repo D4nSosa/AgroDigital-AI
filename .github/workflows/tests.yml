@@ -22,3 +22,5 @@ jobs:
           agrodigital rainfall 12.5 0 8 3.2
           agrodigital raster-info --help
           agrodigital stac-search --help
+          agrodigital download-asset --help
+          agrodigital sentinel2-ndvi --help
