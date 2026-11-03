@@ -13,8 +13,11 @@
 
 Always state the exact index variant and bands used. Check reflectance scaling/offset, nodata, zero denominators, cloud/shadow masks, pixel alignment and sensor product level. Index values are unitless. Do not compare products blindly when processing, sensor, season or atmosphere differs.
 
-## Time series
-Use consistent AOI, sensor/product, index definition, cloud masking, compositing window and spatial aggregation. Report the number of valid observations per period. A gap in observations is not evidence of no change. Separate seasonality from disturbance or management effects.
+## Time series and monitoring
+Use consistent AOI, sensor/product, index definition, cloud masking, compositing window and spatial aggregation. Report the number of valid observations per period. A gap in observations is not evidence of no change. Separate seasonality from disturbance or management effects. Use anomaly/time-series layers to guide scouting, not as a standalone diagnosis or input-rate prescription.
+
+## Management-zone support
+Multi-date imagery can contribute to management-zone delineation when combined with suitable yield, soil, terrain, electrical-conductivity, crop-history and field-observation data. Record season, crop stage, sensor, resolution, masks and compositing method. A single NDVI image is not sufficient evidence for a stable management zone or variable-rate input recommendation.
 
 ## Sentinel-2 AgroDigital-AI package boundary
 The existing v0.4 workflow searches public STAC metadata and processes one selected Sentinel-2 L2A Item: downloads red/NIR and optional SCL assets, applies metadata scale/offset, aligns categorical SCL with nearest-neighbour when needed, calculates NDVI and can clip to a supplied GeoJSON AOI through the agent API. It does not provide atmospheric correction, robust cloud/shadow masking, temporal composites, yield models or Sentinel-1 processing.

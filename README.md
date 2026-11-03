@@ -1,8 +1,8 @@
 # AgroDigital-AI
 
-Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing, agrometeorology and AI agents. It combines deterministic Python tools with an optional Model Context Protocol (MCP) server so compatible AI clients can invoke supported workflows.
+Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing, agrometeorology, precision agriculture and AI agents. It combines deterministic Python tools with an optional Model Context Protocol (MCP) server so compatible AI clients can invoke supported workflows.
 
-It is a modular workflow layer around open data and Python—not a claim that it replaces every feature of QGIS or Google Earth Engine.
+It is a modular workflow layer around open data and Python—not a claim that it replaces every feature of QGIS, Google Earth Engine or commercial farm-management platforms.
 
 ## AI-native use (v0.4)
 
@@ -24,9 +24,9 @@ Example client configuration: examples/mcp-config.json. Setup and usage: docs/AI
 
 The AI interprets ordinary photos. AgroDigital-AI tools validate GeoJSON, inspect rasters, search STAC, download and process supported Sentinel-2 assets, and calculate supplied weather/agronomic values. An ordinary photograph is not a georeferenced raster and cannot establish soil chemistry or yield.
 
-## Portable multipurpose Agent Skill (new)
+## Portable multipurpose Agent Skill
 
-A portable, no-server Skill is available at `skills/agrodigital-ai/`. It follows the open Agent Skills folder format and includes focused domain references plus small local Python utilities. Users attach their own lot photos, reports, boundaries and datasets directly to their chosen AI client; no user lot imagery or sample farm records are stored in this repository.
+A portable, no-server Skill is available at `skills/agrodigital-ai/`. It follows the open Agent Skills folder format and includes focused domain references plus small local Python utilities. It supports agricultural and forestry analysis, monitoring, management-zone reasoning, preparation and review of draft prescription maps, GIS and remote sensing. Users attach their own lot photos, reports, boundaries and datasets directly to their chosen AI client; no user lot imagery or sample farm records are stored in this repository.
 
 Copy or import the complete `skills/agrodigital-ai/` folder into an AI client that supports Agent Skills. A chatbot that can read Markdown can also use the instructions and references manually, but automatic discovery and script execution depend on that client's features.
 
@@ -81,7 +81,9 @@ The STAC-to-NDVI workflow downloads the red/NIR/SCL assets for one selected publ
 - STAC processing handles one selected scene. It does not produce temporal composites or change detection.
 - AOI clipping is available through the agent API/MCP tool; the current STAC CLI command does not expose an AOI argument.
 - SCL nearest-neighbour alignment is categorical resampling, not advanced cloud/shadow detection.
-- No atmospheric correction, Sentinel-1 processing, validated crop/yield models, automatic prescriptions or full QGIS/GEE-equivalent GUI.
+- No atmospheric correction, robust cloud/shadow masking, Sentinel-1 processing, validated crop/yield models, automatic prescriptions or full QGIS/GEE-equivalent GUI.
+- The portable Skill can help design management zones and prepare draft prescription layers when suitable data and tools exist. It does not claim direct integration with FieldView or other commercial platforms, universal controller compatibility, agronomic sign-off or automatic field application.
+- A prescription map is not operationally approved until rates, units, machine/controller format, calibration, field boundaries, product labels/regulations and responsible professional review are checked.
 - Real-scene end-to-end validation is a separate acceptance check; synthetic unit tests do not prove operational accuracy.
 - The MCP integration test verifies protocol handshake and tool calls using the official Python SDK. An attached-image + AOI workflow still needs acceptance testing in a user-facing AI client.
 
