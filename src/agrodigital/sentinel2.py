@@ -54,7 +54,7 @@ def calculate_sentinel2_ndvi(red_path: str | Path, nir_path: str | Path,
                 if (red.width, red.height, red.transform, red.crs) != (scl.width, scl.height, scl.transform, scl.crs):
                     raise Sentinel2Error("SCL raster is not aligned with red/NIR inputs.")
                 scl_data = scl.read(1, masked=True)
-                scl_values = scl_data.filled(-1)
+                scl_values = scl_data.filled(0)
                 valid &= ~np.ma.getmaskarray(scl_data)
                 valid &= ~np.isin(scl_values, excluded)
 
