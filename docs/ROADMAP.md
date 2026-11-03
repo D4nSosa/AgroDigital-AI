@@ -23,19 +23,19 @@ Roadmap items are targets, not claims of existing functionality.
 - [x] Independent red/NIR scaling and offsets.
 - [x] Nearest-neighbour alignment of categorical SCL to the red/NIR grid.
 - [x] NDVI output with item, source, parameter and limitation provenance.
-- [x] Optional clipping of NDVI to a supplied GeoJSON AOI.
+- [x] Optional clipping of NDVI to a supplied GeoJSON AOI through the agent API.
 - [x] CLI workflow, unit tests and CI.
 - [ ] Run and archive a real public Sentinel-2 scene end-to-end; verify scene metadata, downloaded files, grid alignment and output values independently. Synthetic tests are not a substitute for this acceptance check.
 
-## v0.4 AI-native agent interface — implementation target
+## v0.4 AI-native agent interface — implementation complete; user-facing acceptance pending
 - [x] Evidence-aware analysis planning tool.
 - [x] Provider-neutral agent tool functions.
 - [x] Optional MCP stdio server with typed tools.
 - [x] MCP client configuration example and agent usage guide.
 - [x] Natural-language and multimodal input contract for image + geospatial evidence.
-- [x] GeoJSON AOI input for scene search and clipped processing.
-- [ ] Validate MCP handshake and tool calls in at least one real MCP client.
-- [ ] Test an attached user image plus a GeoJSON AOI through a complete agent workflow.
+- [x] GeoJSON AOI input for scene search and clipped processing through the agent API.
+- [x] Automated MCP SDK handshake, tool discovery and tool-call test in CI.
+- [ ] Test an attached user image plus a GeoJSON AOI through a complete workflow in a user-facing AI client.
 - [ ] Add hosted/remote MCP deployment only after a concrete hosting and access-control design.
 
 ## v0.5 agroforestry and decision support
