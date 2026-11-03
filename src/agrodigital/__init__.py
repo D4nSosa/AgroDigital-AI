@@ -1,2 +1,2 @@
-"""AgroDigital-AI portable geospatial and AgTech toolkit."""
-__version__ = "0.2.0"
+"""AgroDigital-AI portable geospatial and AI-agent toolkit."""
+__version__ = "0.4.0"
