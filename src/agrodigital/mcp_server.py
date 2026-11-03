@@ -47,15 +47,17 @@ def main() -> None:
 
     @server.tool()
     def agro_search_satellite_scenes(
-        bbox: list[float], datetime_range: str,
+        datetime_range: str,
+        bbox: list[float] | None = None,
+        intersects: dict | None = None,
         collections: list[str] | None = None,
         cloud_cover_max: float | None = None,
         max_items: int = 10,
     ) -> dict:
-        """Search public STAC metadata for scenes intersecting an EPSG:4326 bbox."""
+        """Search public STAC metadata by EPSG:4326 bbox or GeoJSON geometry."""
         return search_satellite_scenes(
-            bbox, datetime_range, collections=collections,
-            cloud_cover_max=cloud_cover_max, max_items=max_items,
+            bbox=bbox, intersects=intersects, datetime_range=datetime_range,
+            collections=collections, cloud_cover_max=cloud_cover_max, max_items=max_items,
         )
 
     @server.tool()
@@ -66,11 +68,13 @@ def main() -> None:
         max_bytes_per_asset: int = 2_000_000_000,
         use_scl: bool = True,
         overwrite: bool = False,
+        aoi_geojson: dict | None = None,
     ) -> dict:
-        """Download red/NIR/SCL assets from a public STAC item and calculate NDVI."""
+        """Download public Sentinel-2 assets, calculate NDVI and optionally clip to a GeoJSON AOI."""
         return process_sentinel2_scene(
             item_id, output_dir, output_path=output_path, collection=collection,
-            max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl, overwrite=overwrite,
+            max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl,
+            overwrite=overwrite, aoi_geojson=aoi_geojson,
         )
 
     @server.tool()
