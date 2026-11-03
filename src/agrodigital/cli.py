@@ -46,7 +46,7 @@ def build_parser():
     topology = sub.add_parser("vector-validate", help="Validate vector geometry topology with Shapely")
     topology.add_argument("input")
 
-    stac = sub.add_parser("stac-search", help="Search public STAC metadata (does not download imagery)")
+    stac = sub.add_parser("stac-search", help="Search public STAC metadata")
     area = stac.add_mutually_exclusive_group(required=True)
     area.add_argument("--bbox", nargs=4, type=float, metavar=("WEST", "SOUTH", "EAST", "NORTH"))
     area.add_argument("--intersects", help="Path to GeoJSON geometry/Feature/FeatureCollection")
@@ -55,6 +55,26 @@ def build_parser():
     stac.add_argument("--max-items", type=int, default=20)
     stac.add_argument("--cloud-cover-max", type=float)
     stac.add_argument("--endpoint", default="https://earth-search.aws.element84.com/v1")
+
+    download = sub.add_parser("download-asset", help="Download one public/authorized HTTPS asset with a size limit")
+    download.add_argument("url")
+    download.add_argument("output")
+    download.add_argument("--max-bytes", type=int, default=2_000_000_000)
+    download.add_argument("--sha256")
+    download.add_argument("--timeout", type=int, default=60)
+    download.add_argument("--overwrite", action="store_true")
+
+    s2 = sub.add_parser("sentinel2-ndvi", help="Calculate Sentinel-2 L2A NDVI from aligned B04/B08 rasters")
+    s2.add_argument("--red", required=True, help="Red band B04 GeoTIFF")
+    s2.add_argument("--nir", required=True, help="NIR band B08 GeoTIFF")
+    s2.add_argument("--scl", help="Optional aligned Scene Classification Layer GeoTIFF")
+    s2.add_argument("--output", required=True)
+    s2.add_argument("--scale-factor", type=float, required=True,
+                    help="Explicit product DN scale factor; inspect source metadata")
+    s2.add_argument("--red-offset", type=float, default=0.0)
+    s2.add_argument("--nir-offset", type=float, default=0.0)
+    s2.add_argument("--exclude-scl", type=int, nargs="+", default=[0, 1, 3, 8, 9, 10, 11],
+                    help="SCL classes to mask; default: 0 1 3 8 9 10 11")
     return parser
 
 
@@ -94,6 +114,16 @@ def main(argv=None):
             result = search_stac(bbox=args.bbox, intersects=intersects, datetime=args.datetime,
                                  collections=args.collections, max_items=args.max_items,
                                  cloud_cover_max=args.cloud_cover_max, endpoint=args.endpoint)
+        elif args.command == "download-asset":
+            from .download import download_asset
+            result = download_asset(args.url, args.output, max_bytes=args.max_bytes,
+                                    sha256=args.sha256, timeout=args.timeout, overwrite=args.overwrite)
+        elif args.command == "sentinel2-ndvi":
+            from .sentinel2 import calculate_sentinel2_ndvi
+            result = calculate_sentinel2_ndvi(
+                args.red, args.nir, args.output, scale_factor=args.scale_factor,
+                red_offset=args.red_offset, nir_offset=args.nir_offset, scl_path=args.scl,
+                excluded_scl_classes=args.exclude_scl)
         else:
             raise ValueError(f"Unsupported command: {args.command}")
         print(json.dumps(result, indent=2, ensure_ascii=False))
