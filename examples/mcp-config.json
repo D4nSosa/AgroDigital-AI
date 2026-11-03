@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agrodigital-ai": {
+      "command": "python",
+      "args": ["-m", "agrodigital.mcp_server"]
+    }
+  }
+}

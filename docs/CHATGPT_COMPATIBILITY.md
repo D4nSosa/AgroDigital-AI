@@ -1,18 +1,21 @@
-# ChatGPT Free and Pro compatibility
+# AI client compatibility
 
-AgroDigital-AI has one shared core. The same SKILL.md and module guides can be supplied as context in either plan. Models, tools, file limits, usage limits and integrations may differ between plans and sessions and can change. The repository cannot control these product entitlements.
+AgroDigital-AI has one shared open core. An AI can use the repository instructions as context if it can read GitHub files. To execute deterministic tools directly, the client needs a compatible execution environment or an MCP connection.
 
-## Practical use
-1. Open the repository and provide SKILL.md to the conversation (paste or attach where supported).
-2. Include only the relevant guide from docs/modules/.
-3. Describe the task, area, dates, crop/species and desired output.
-4. Ask the assistant to state whether it can execute directly or needs an assisted workflow.
-5. For GIS/raster tasks beyond chat capabilities, run supplied code in local Python, QGIS or a free notebook environment, then return outputs for review.
+## Repository-only mode
+1. Provide the repository URL and ask the assistant to read SKILL.md and docs/AI_AGENT_GUIDE.md.
+2. Attach the image or data file to the AI conversation.
+3. Ask it to state which evidence it can inspect and whether it can execute the requested operations.
+4. If it cannot run the tools, it must provide an evidence-aware plan and not claim that processing occurred.
 
-## What the core provides
-Methodology, reproducible workflow design, code generation, validation and analysis of data actually available in the session. Optional integrations are used only when connected and authorized.
+## MCP mode
+Connect the optional local MCP server using examples/mcp-config.json. Install the full dependencies with:
 
-## What it cannot guarantee
-Identical model quality, context/file limits, or tools in Free and Pro; live satellite/API access; GIS execution in every chat; native installation as a ChatGPT Skill from a GitHub URL; or that generated code was executed.
+~~~bash
+python -m pip install -e ".[full]"
+~~~
 
-Before documenting a product-specific import path or plan entitlement, verify current official OpenAI documentation. Do not infer availability from old screenshots or plan descriptions.
+The client and MCP server must share access to files used by geospatial tools. A file attached only to a remote chat may not exist on the MCP server's filesystem. The AI may still visually interpret an attached ordinary image if its client supports vision; the server handles structured geospatial operations.
+
+## What is not guaranteed
+The repository does not install a native Skill in a chat product, enable MCP automatically, host a remote server, guarantee live data access, or guarantee that every AI client supports MCP. Model quality, file handling, context limits and execution capabilities vary by client and session. MCP compatibility is not universal AI compatibility.

@@ -1,14 +1,15 @@
 # Public satellite catalog discovery
 
-AgroDigital-AI includes a minimal STAC API client for catalog discovery. Its default endpoint is AWS Earth Search; the endpoint can be overridden with another HTTPS STAC API.
+AgroDigital-AI includes a minimal STAC API client for public catalog discovery. The default endpoint is AWS Earth Search; another HTTPS STAC API can be selected explicitly.
 
-Example:
-```bash
-agrodigital stac-search --bbox -56 -29 -54 -27 \
-  --datetime 2026-01-01T00:00:00Z/2026-02-01T00:00:00Z \
-  --collections sentinel-2-l2a --max-items 20
-```
+Search by bbox or GeoJSON intersection, date interval, collection and optional cloud-cover threshold. Results include Item IDs, dates, cloud-cover metadata, geometry/bbox, asset URLs and available asset metadata.
 
-Use `--intersects path/to/aoi.geojson` instead of `--bbox` for a polygon. The client returns item identifiers, collection, acquisition time, cloud-cover metadata, bounding boxes and asset references.
+The search remains discovery only. It does not itself download imagery. For a complete Sentinel-2 L2A scene workflow, select a returned Item ID and run:
 
-The search is metadata-only. No asset download, cloud masking, atmospheric correction, pixel processing, cache, retry queue or signed-URL refresh is implemented yet. Catalog metadata and licensing/availability can change; verify every item and asset before use. Never treat a catalog hit as a successfully downloaded scene.
+~~~bash
+agrodigital sentinel2-stac-ndvi --item-id "STAC_ITEM_ID" --output-dir ./results
+~~~
+
+The processing workflow retrieves the full STAC Item, downloads red/NIR and optionally SCL assets, derives reflectance scale/offset parameters from Item metadata, aligns categorical SCL to the red/NIR grid using nearest-neighbour resampling, and calculates NDVI. It records Item ID, collection, date, cloud cover, license URL, asset keys and parameters.
+
+Catalog metadata, item availability and licensing can change. Verify the Item and license before operational use. A catalog hit is not proof that the scene is suitable for the intended analysis.

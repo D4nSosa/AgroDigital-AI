@@ -8,6 +8,7 @@ if importlib.util.find_spec("rasterio") and importlib.util.find_spec("numpy"):
     import rasterio
     from rasterio.transform import from_origin
     from agrodigital.sentinel2 import calculate_sentinel2_ndvi, Sentinel2Error
+    from agrodigital.sentinel2_stac import _align_scl_to_red_grid
     AVAILABLE = True
 else:
     AVAILABLE = False
@@ -42,6 +43,25 @@ class Sentinel2Tests(unittest.TestCase):
             self.assertEqual(float(values[0, 1]), -9999.0)
             self.assertAlmostEqual(float(values[1, 0]), 0.5, places=6)
             self.assertEqual(float(values[1, 1]), -9999.0)
+
+    def test_supports_independent_band_scale_factors(self):
+        output = self.root / "different-scale.tif"
+        calculate_sentinel2_ndvi(self.red, self.nir, output,
+                                 scale_factor=10000, nir_scale_factor=20000)
+        with rasterio.open(output) as src:
+            self.assertAlmostEqual(float(src.read(1)[0, 0]), 0.2, places=6)
+
+    def test_aligns_20m_scl_to_10m_red_grid(self):
+        coarse = self.root / "coarse-scl.tif"
+        profile = dict(self.profile)
+        profile.update(width=1, height=1, transform=from_origin(500000, 7000000, 20, 20))
+        with rasterio.open(coarse, "w", **profile) as dst:
+            dst.write(np.array([[4]], dtype="uint16"), 1)
+        aligned = self.root / "aligned-scl.tif"
+        result_path = _align_scl_to_red_grid(coarse, self.red, aligned)
+        with rasterio.open(result_path) as src:
+            self.assertEqual((src.width, src.height), (2, 2))
+            self.assertTrue(np.all(src.read(1) == 4))
 
     def test_rejects_invalid_scale(self):
         with self.assertRaises(Sentinel2Error):
