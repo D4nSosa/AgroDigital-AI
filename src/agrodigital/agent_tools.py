@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from .core import inspect_python_capabilities
-from .geo import validate_geojson
+from .geo import GeoJSONError, validate_geojson
 from .sentinel2_stac import process_sentinel2_stac_item
 from .stac import DEFAULT_STAC_URL, search_stac
 from .weather import growing_degree_days, rainfall_total
@@ -19,7 +19,12 @@ def plan_analysis(objective: str, *, aoi_geojson: dict | None = None,
         raise ValueError("Provide aoi_geojson or bbox, not both.")
     aoi_status = "provided"
     if aoi_geojson is not None:
-        aoi_validation = validate_geojson(aoi_geojson)
+        try:
+            aoi_validation = validate_geojson(aoi_geojson)
+        except GeoJSONError as exc:
+            return {"status": "needs_input", "objective": objective,
+                    "aoi_status": "invalid", "aoi_validation_error": str(exc),
+                    "missing_or_uncertain": ["A valid WGS84 GeoJSON AOI is required before spatial analysis."]}
         if not aoi_validation.get("valid", False):
             return {"status": "needs_input", "objective": objective,
                     "aoi_validation": aoi_validation,
@@ -68,7 +73,9 @@ def plan_analysis(objective: str, *, aoi_geojson: dict | None = None,
 
 
 def get_capabilities() -> dict:
-    return inspect_python_capabilities().to_dict()
+    return inspect_python_capabilities(
+        modules=("numpy", "shapely", "pyproj", "rasterio", "mcp")
+    ).to_dict()
 
 
 def search_satellite_scenes(bbox: list[float], datetime_range: str, *,
