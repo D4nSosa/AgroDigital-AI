@@ -24,6 +24,19 @@ Example client configuration: examples/mcp-config.json. Setup and usage: docs/AI
 
 The AI interprets ordinary photos. AgroDigital-AI tools validate GeoJSON, inspect rasters, search STAC, download and process supported Sentinel-2 assets, and calculate supplied weather/agronomic values. An ordinary photograph is not a georeferenced raster and cannot establish soil chemistry or yield.
 
+## Portable multipurpose Agent Skill (new)
+
+A portable, no-server Skill is available at `skills/agrodigital-ai/`. It follows the open Agent Skills folder format and includes focused domain references plus small local Python utilities. Users attach their own lot photos, reports, boundaries and datasets directly to their chosen AI client; no user lot imagery or sample farm records are stored in this repository.
+
+Copy or import the complete `skills/agrodigital-ai/` folder into an AI client that supports Agent Skills. A chatbot that can read Markdown can also use the instructions and references manually, but automatic discovery and script execution depend on that client's features.
+
+The bundled scripts require Python 3.10+ and work on supplied local files only:
+- `scripts/validate_geojson.py`: structural and coordinate-range validation.
+- `scripts/calculate_indices.py`: NDVI and optional McFeeters NDWI from supplied CSV band values.
+- `scripts/calculate_gdd.py`: GDD from supplied daily minimum/maximum temperature CSV values.
+
+See [Skill README](skills/agrodigital-ai/README.md). Advanced raster/STAC/Sentinel-2 processing remains in the main Python package and requires a compatible execution runtime; the Skill does not create network access or install dependencies by itself.
+
 ## Install Python core
 
 ~~~bash
