@@ -14,13 +14,7 @@ When a user shares this repository, says "use AgroDigital-AI", or provides it as
 ## User interaction contract
 Accept natural-language objectives and user-provided images/files. A vision-capable model interprets ordinary photographs and screenshots; deterministic tools process georeferenced data and supported calculations. Do not pretend that an ordinary photo is a georeferenced raster. Ask for location/AOI, date and crop/species only when they materially affect the requested result.
 
-Identify objective, AOI, period, crop/species, decision and desired output. State assumptions. Separate:
-- visual observations;
-- source measurements/observations;
-- derived calculations or indices;
-- estimates and model outputs;
-- forecasts;
-- illustrative content.
+Identify objective, AOI, period, crop/species, decision and desired output. State assumptions. Separate visual observations, source measurements, derived calculations/indices, estimates/model outputs, forecasts and illustrative content.
 
 Never fabricate measurements, imagery, API responses, station observations, files, maps or processing results. Record provider/product, item ID, acquisition/valid time, spatial/temporal resolution, CRS, units, method, parameters, assumptions, validation and limitations. Do not present an index as direct yield, soil moisture, nutrient status, species identity or plant-health measurement without validation.
 
@@ -36,10 +30,10 @@ A tool's existence does not mean it has been run. A plan tool returns a plan, no
 - Rasterio GeoTIFF inspection, normalized-difference raster generation, AOI clipping and reprojection.
 - Public STAC search and complete STAC Item retrieval.
 - Bounded HTTPS downloads with byte ceilings, atomic finalization and optional SHA-256.
-- STAC-driven Sentinel-2 L2A workflow: select a returned Item ID, download red/NIR/optional SCL assets, read reflectance scale/offset metadata, align categorical SCL to the red/NIR grid with nearest-neighbour when needed, calculate NDVI and emit provenance.
+- STAC-driven Sentinel-2 L2A workflow: select a returned Item ID, download red/NIR/optional SCL assets, read reflectance scale/offset metadata, align categorical SCL to the red/NIR grid with nearest-neighbour when needed, calculate NDVI, optionally clip the output to a supplied GeoJSON AOI, and emit provenance.
 - Explicit Sentinel-2 NDVI from supplied aligned rasters, with independent red/NIR scaling and offsets.
 - NDVI/NDWI calculations from supplied values/arrays; GDD and rainfall calculations.
-- Optional MCP server for agent tool calling: agro_plan_analysis, agro_capabilities, agro_validate_geojson, agro_search_satellite_scenes, agro_process_sentinel2_scene, agro_inspect_raster, agro_calculate_gdd, agro_calculate_rainfall.
+- Optional MCP server: agro_plan_analysis, agro_capabilities, agro_validate_geojson, agro_search_satellite_scenes, agro_process_sentinel2_scene, agro_inspect_raster, agro_calculate_gdd, agro_calculate_rainfall.
 
 Install full agent/geospatial runtime: python -m pip install -e ".[full]".
 Run MCP stdio server: agrodigital-mcp or python -m agrodigital.mcp_server.
@@ -57,7 +51,7 @@ Run MCP stdio server: agrodigital-mcp or python -m agrodigital.mcp_server.
 ## Current boundaries
 MCP is an agent-tool interface, not a universal AI connector. The AI client must support MCP, be configured to connect to the server, and have access to the files used by tools. The initial MCP server is local stdio, not a hosted endpoint. A repository link alone does not activate it.
 
-The Sentinel-2 STAC workflow processes one selected scene on its native red/NIR grid. It does not yet produce temporal composites, yield forecasts, crop suitability models, automated prescriptions, or a QGIS/GEE-equivalent interface. SCL masking is not a guarantee of cloud-free imagery. No atmospheric correction is performed by the workflow.
+The Sentinel-2 STAC workflow processes one selected scene and can clip the output to a GeoJSON AOI. It does not yet produce temporal composites, yield forecasts, crop suitability models, automated prescriptions, or a QGIS/GEE-equivalent interface. SCL masking is not a guarantee of cloud-free imagery. No atmospheric correction is performed by the workflow.
 
 ## Agronomic caution
 Do not issue high-consequence pesticide, fertilizer, irrigation or machinery prescriptions from an index or generic model alone. Require local context, ground truth, calibration, product labels, regulations and qualified review. A photograph alone cannot establish soil chemistry, nutrient status, yield or soil moisture.
