@@ -26,6 +26,8 @@ Use this order:
 7. Field validation / next action.
 8. Sources and provenance.
 
+For management zones or prescriptions, additionally report the target operation, source layers, zoning/rate logic, units, thresholds, NoData treatment, spatial resolution, equipment/controller target and approval status. Clearly label exploratory zones and draft prescriptions. Do not label an output approved for field use without documented professional review and equipment validation.
+
 Omit sections that do not apply. Avoid padding a short request into a long report.
 
 ## Units and language
