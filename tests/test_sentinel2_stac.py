@@ -32,6 +32,11 @@ class Sentinel2STACTests(unittest.TestCase):
         self.assertAlmostEqual(_reflectance_parameters(item, "red")["scale_factor"], 5000)
         self.assertAlmostEqual(_reflectance_parameters(item, "red")["offset"], -0.03)
 
+    def test_missing_scale_is_not_guessed(self):
+        item = {"properties": {}, "assets": {"red": {"raster:bands": [{}]}}}
+        with self.assertRaises(Sentinel2STACError):
+            _reflectance_parameters(item, "red")
+
     def test_reject_non_https_asset(self):
         with self.assertRaises(Sentinel2STACError):
             _asset_href({"assets": {"red": {"href": "http://example.com/red.tif"}}}, "red")
