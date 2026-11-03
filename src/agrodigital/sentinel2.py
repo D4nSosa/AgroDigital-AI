@@ -58,6 +58,7 @@ def calculate_sentinel2_ndvi(red_path: str | Path, nir_path: str | Path,
                 valid &= ~np.isin(scl_values, excluded)
 
         denominator = nir_reflectance + red_reflectance
+        valid &= np.isfinite(red_reflectance) & np.isfinite(nir_reflectance)
         valid &= np.isfinite(denominator) & (denominator != 0)
         output = np.full((red.height, red.width), -9999.0, dtype="float32")
         np.divide(nir_reflectance - red_reflectance, denominator,
@@ -77,7 +78,9 @@ def calculate_sentinel2_ndvi(red_path: str | Path, nir_path: str | Path,
                 cloud_mask="SCL class exclusion" if scl_path else "not applied",
                 processing_note="Inputs assumed preprocessed L2A reflectance DN; no atmospheric correction or resampling performed."
             )
+    with rasterio.open(output_path) as result_ds:
+        output_crs = result_ds.crs.to_string() if result_ds.crs else None
     return {"output": str(output_path), "index": "NDVI", "formula": "(NIR-RED)/(NIR+RED)",
             "scale_factor": scale_factor, "red_offset": red_offset, "nir_offset": nir_offset,
             "scl_applied": scl_path is not None, "excluded_scl_classes": list(excluded),
-            "nodata": -9999.0, "crs": rasterio.open(output_path).crs.to_string() if rasterio.open(output_path).crs else None}
+            "nodata": -9999.0, "crs": output_crs}
