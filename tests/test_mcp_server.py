@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from mcp import ClientSession, StdioServerParameters
@@ -7,7 +8,7 @@ from mcp.client.stdio import stdio_client
 class MCPServerIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_stdio_handshake_lists_and_calls_tools(self):
         params = StdioServerParameters(
-            command="python",
+            command=sys.executable,
             args=["-m", "agrodigital.mcp_server"],
         )
         async with stdio_client(params) as (read_stream, write_stream):
