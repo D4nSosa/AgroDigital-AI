@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install package and optional geospatial dependencies
+      - name: Install package and optional geospatial and MCP dependencies
         run: python -m pip install -e ".[full]"
       - name: Run tests
         run: python -m unittest discover -s tests -v
@@ -24,3 +24,5 @@ jobs:
           agrodigital stac-search --help
           agrodigital download-asset --help
           agrodigital sentinel2-ndvi --help
+          agrodigital sentinel2-stac-ndvi --help
+          agrodigital-mcp --help || true
