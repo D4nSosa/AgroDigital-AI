@@ -61,3 +61,8 @@ Package-managed local paths must be relative to `AGRODIGITAL_WORKDIR` (default `
 ## Time-series and forecast modules
 
 `agrodigital.timeseries` summarizes already-derived, aligned single-band NDVI GeoTIFF scenes over a supplied GeoJSON AOI. It exports per-scene mean, median, p10, p90 and valid-pixel counts to CSV, plus a per-pixel temporal median GeoTIFF. It does not fetch scenes. `agrodigital.forecast` provides a standard-library Theil-Sen trend on deseasonalized anomalies, calendar-month median climatology, approximate robust residual intervals and monthly anomaly flags. Forecasts are labelled PRONÓSTICO and are exploratory, not calibrated crop/climate predictions. See `AGENT_ENTRYPOINT.md` and `docs/REPORT_TEMPLATE.md`.
+
+
+## GDD calculation methods
+
+The default GDD method is the daily mean method: `max(0, min((Tmin + Tmax) / 2, upper) - base)`. The optional `modified` method clips Tmin and Tmax independently to the base and optional upper thresholds before averaging, then subtracts the base threshold. Select `--method modified` in the CLI or `method="modified"` in the agent/MCP calculation. Inputs must be finite numeric Celsius values; booleans, NaN and infinities are rejected.
