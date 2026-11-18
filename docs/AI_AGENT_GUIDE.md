@@ -28,6 +28,8 @@ The MCP server currently exposes:
 - agro_process_sentinel2_scene: download public red/NIR/SCL assets from one STAC Item, calculate NDVI and optionally clip the result to a GeoJSON AOI.
 - agro_inspect_raster: inspect raster metadata.
 - agro_calculate_gdd and agro_calculate_rainfall: calculate from values explicitly supplied by the user or another trusted source.
+- agro_forecast_monthly_series and agro_detect_monthly_anomalies: exploratory statistical forecasts/anomaly detection from supplied monthly series; outputs are labelled and are not measurements.
+- agro_summarize_sentinel2_timeseries: per-scene AOI NDVI statistics and a temporal median composite from aligned, user-supplied NDVI rasters.
 
 ## Working with an ordinary image
 
@@ -54,3 +56,8 @@ The MCP server runs where it is configured; it does not upload user files to a c
 ## Filesystem and Sentinel-2 mask defaults
 
 Package-managed local paths must be relative to `AGRODIGITAL_WORKDIR` (default `./agrodigital_work`); absolute paths, `..` and symlinks are rejected. The default Sentinel-2 SCL exclusions are classes 0, 1, 3, 8, 9, 10 and 11. Classes 2, 6 and 7 remain included by default. Configure the exclusion list through the CLI `--exclude-scl` option or the MCP `excluded_scl_classes` argument. This mask is not a guarantee of cloud-free pixels.
+
+
+## Time-series and forecast modules
+
+`agrodigital.timeseries` summarizes already-derived, aligned single-band NDVI GeoTIFF scenes over a supplied GeoJSON AOI. It exports per-scene mean, median, p10, p90 and valid-pixel counts to CSV, plus a per-pixel temporal median GeoTIFF. It does not fetch scenes. `agrodigital.forecast` provides a standard-library Theil-Sen trend on deseasonalized anomalies, calendar-month median climatology, approximate robust residual intervals and monthly anomaly flags. Forecasts are labelled PRONÓSTICO and are exploratory, not calibrated crop/climate predictions. See `AGENT_ENTRYPOINT.md` and `docs/REPORT_TEMPLATE.md`.
