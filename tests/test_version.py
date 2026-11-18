@@ -6,6 +6,7 @@ import agrodigital
 
 
 class PackageVersionTests(unittest.TestCase):
+    # The CI suite also compiles the Colab script and exercises the MCP server.
     """Regression guard for package metadata and release-tag consistency."""
     def test_package_and_build_metadata_versions_match(self):
         root = Path(__file__).resolve().parents[1]
