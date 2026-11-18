@@ -1,10 +1,13 @@
 # AgroDigital-AI
 
+**Python package version: 0.5.0** (single source: `src/agrodigital/__init__.py`; packaging version in `pyproject.toml` is kept in sync).
+
+
 Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing, agrometeorology, precision agriculture and AI agents. It combines deterministic Python tools with an optional Model Context Protocol (MCP) server so compatible AI clients can invoke supported workflows.
 
 It is a modular workflow layer around open data and Python—not a claim that it replaces every feature of QGIS, Google Earth Engine or commercial farm-management platforms.
 
-## AI-native use (v0.4)
+## AI-native use (v0.5.0)
 
 Give an AI the repository context and attach an image or data file. For tool execution, connect the optional MCP server in an MCP-compatible client.
 
@@ -61,18 +64,32 @@ agrodigital raster-info ./results/STAC_ITEM_ID_ndvi.tif
 
 The STAC-to-NDVI workflow downloads the red/NIR/SCL assets for one selected public Item, derives reflectance scaling/offsets from Item metadata, aligns categorical SCL to the red/NIR grid with nearest-neighbour if needed, and calculates NDVI. Through the Python agent API/MCP tool, the result can additionally be clipped to a supplied GeoJSON AOI. The CLI command currently processes the full scene. Review the Item's license, date, cloud cover and output provenance. The output is a scene-level index, not a yield or crop-health measurement.
 
+## Time series and forecasting (experimental)
+
+- `src/agrodigital/timeseries.py` summarizes already-processed, aligned single-band NDVI GeoTIFF scenes over a GeoJSON AOI. It exports per-scene mean, median, p10, p90 and valid-pixel counts to CSV and a per-pixel temporal median composite. It does not fetch imagery.
+- `src/agrodigital/forecast.py` provides a standard-library Theil-Sen trend on deseasonalized anomalies, monthly median climatology, approximate robust residual intervals and calendar-month anomaly flags. All future values are explicitly labelled PRONÓSTICO; intervals are approximate and not calibrated.
+- `AGENT_ENTRYPOINT.md` is a self-contained instruction document for AI sessions. It does not grant execution, network, Earth Engine or file access.
+- `notebooks_and_scripts/gee_timeseries.js` and `colab_timeseries.py` demonstrate Sentinel-2, Landsat, CHIRPS, ERA5-Land and NASA POWER data retrieval, charts and CSV exports. Earth Engine requires the user account/session; public data access is subject to provider terms.
+- `docs/REPORT_TEMPLATE.md` provides a provenance-aware reporting structure.
+
 ## Implemented capabilities
 
 - GeoJSON structural checks and coordinate-range validation.
 - Optional topology validation and vector reprojection with Shapely/PyProj.
 - GeoTIFF metadata inspection, normalized-difference raster calculation, AOI clipping/masking and raster reprojection with Rasterio.
 - Public STAC metadata search and complete Item retrieval.
-- Bounded HTTPS asset download with optional SHA-256 verification.
+- Bounded HTTPS asset download (500 MB per asset by default) with public-IP destination checks, HTTPS redirect validation and optional SHA-256 verification.
 - STAC-driven Sentinel-2 L2A red/NIR/SCL download and NDVI processing, with optional GeoJSON AOI clipping through the agent API.
 - Sentinel-2 NDVI from supplied aligned rasters, with independent band scale factors and offsets.
 - NDVI/NDWI calculations from supplied values/arrays; GDD and rainfall calculations.
 - Optional MCP server with typed tools for agent workflows.
 - Unit tests, MCP SDK client handshake/tool-call test, and GitHub Actions.
+
+## Filesystem safety
+
+All package-managed local input/output paths are relative to `AGRODIGITAL_WORKDIR` (default `./agrodigital_work`). Absolute paths, parent traversal and symlinks are rejected. Put source files inside that directory or configure the environment variable to a trusted workspace.
+
+The Sentinel-2 SCL mask excludes classes 0, 1, 3, 8, 9, 10 and 11 by default. Classes 2, 6 and 7 are retained unless explicitly excluded. Configure the list with `--exclude-scl` in the CLI or `excluded_scl_classes` in MCP.
 
 ## Important limitations
 

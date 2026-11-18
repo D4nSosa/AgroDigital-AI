@@ -14,6 +14,7 @@ def main() -> None:
     from .agent_tools import (
         calculate_gdd, calculate_rainfall, get_capabilities, plan_analysis,
         process_sentinel2_scene, search_satellite_scenes,
+        forecast_monthly, detect_anomalies, summarize_sentinel2_series,
     )
     from .raster import inspect_raster
     from .geo import validate_geojson
@@ -65,16 +66,19 @@ def main() -> None:
         item_id: str, output_dir: str,
         output_path: str | None = None,
         collection: str = "sentinel-2-l2a",
-        max_bytes_per_asset: int = 2_000_000_000,
+        max_bytes_per_asset: int = 500_000_000,
         use_scl: bool = True,
         overwrite: bool = False,
+        excluded_scl_classes: list[int] | None = None,
         aoi_geojson: dict | None = None,
     ) -> dict:
         """Download public Sentinel-2 assets, calculate NDVI and optionally clip to a GeoJSON AOI."""
         return process_sentinel2_scene(
             item_id, output_dir, output_path=output_path, collection=collection,
             max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl,
-            overwrite=overwrite, aoi_geojson=aoi_geojson,
+            overwrite=overwrite,
+            excluded_scl_classes=excluded_scl_classes or (0, 1, 3, 8, 9, 10, 11),
+            aoi_geojson=aoi_geojson,
         )
 
     @server.tool()
@@ -84,14 +88,35 @@ def main() -> None:
 
     @server.tool()
     def agro_calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                           upper_c: float | None = None) -> dict:
+                           upper_c: float | None = None, method: str = "mean") -> dict:
         """Calculate daily growing degree days from supplied temperatures in Celsius."""
-        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c)
+        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c, method)
 
     @server.tool()
     def agro_calculate_rainfall(values_mm: list[float]) -> dict:
         """Sum supplied rainfall observations in millimetres; does not fetch weather data."""
         return calculate_rainfall(values_mm)
+
+    @server.tool()
+    def agro_forecast_monthly_series(observations: list[dict], periods: int = 12) -> dict:
+        """Return a labelled statistical forecast from supplied monthly observations; not a measurement."""
+        return forecast_monthly(observations, periods=periods)
+
+    @server.tool()
+    def agro_detect_monthly_anomalies(observations: list[dict], threshold: float = 2.5) -> dict:
+        """Detect statistical anomalies against calendar-month median climatology."""
+        return detect_anomalies(observations, threshold=threshold)
+
+    @server.tool()
+    def agro_summarize_sentinel2_timeseries(
+        scenes: list[dict], aoi_geojson: dict,
+        output_csv: str = "sentinel2_timeseries.csv",
+        composite_path: str = "sentinel2_ndvi_median_composite.tif",
+    ) -> dict:
+        """Calculate per-scene AOI NDVI statistics and a temporal median raster from aligned scenes."""
+        return summarize_sentinel2_series(
+            scenes, aoi_geojson, output_csv=output_csv, composite_path=composite_path
+        )
 
     server.run(transport="stdio")
 

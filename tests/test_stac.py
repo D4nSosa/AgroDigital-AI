@@ -19,9 +19,9 @@ class STACTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             search_stac(bbox=[-1, -1, 1, 1], endpoint="http://example.com")
 
-    @patch("agrodigital.stac.urlopen")
+    @patch("agrodigital.stac.build_opener")
     def test_returns_catalog_metadata_and_asset_details(self, mocked):
-        mocked.return_value = FakeResponse({"features": [{
+        mocked.return_value.open.return_value = FakeResponse({"features": [{
             "id": "scene-1", "collection": "sentinel-2-l2a",
             "properties": {"datetime": "2026-01-15T10:00:00Z", "eo:cloud_cover": 12.5},
             "bbox": [-1, -1, 1, 1],
@@ -35,10 +35,10 @@ class STACTests(unittest.TestCase):
         self.assertIn("red", result["items"][0]["asset_details"])
         self.assertIn("metadata only", result["note"])
 
-    @patch("agrodigital.stac.urlopen")
+    @patch("agrodigital.stac.build_opener")
     def test_fetches_full_stac_item(self, mocked):
         item = {"id": "scene-1", "assets": {"red": {"href": "https://example.com/red.tif"}}}
-        mocked.return_value = FakeResponse(item)
+        mocked.return_value.open.return_value = FakeResponse(item)
         result = get_stac_item("scene-1")
         self.assertEqual(result["id"], "scene-1")
         self.assertIn("red", result["assets"])
