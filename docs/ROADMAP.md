@@ -1,6 +1,6 @@
 # Roadmap
 
-Current Python package version: **0.4.0**. This is distinct from the portable Skill's own metadata version.
+Current Python package version: **0.5.0**. This is distinct from the portable Skill's own metadata version.
 
 Roadmap items are targets, not claims of existing functionality.
 
