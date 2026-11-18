@@ -164,7 +164,7 @@ def process_sentinel2_stac_item(
         scale_factor=red_params["scale_factor"],
         nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
-        scl_path=scl_aligned_path,
+        scl_path=Path(scl_aligned_path).relative_to(work_root) if scl_aligned_path else None,
     )
     aoi_clip = None
     if aoi_geojson is not None:
