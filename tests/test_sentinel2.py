@@ -48,6 +48,18 @@ class Sentinel2Tests(unittest.TestCase):
             self.assertAlmostEqual(float(values[1, 0]), 0.5, places=6)
             self.assertAlmostEqual(float(values[1, 1]), 0.5, places=6)
 
+    def test_custom_scl_exclusion_list_overrides_defaults(self):
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            calculate_sentinel2_ndvi("red.tif", "nir.tif", "custom-mask.tif",
+                                     scale_factor=10000, scl_path="scl.tif",
+                                     excluded_scl_classes=(2,))
+        with rasterio.open(self.root / "custom-mask.tif") as src:
+            values = src.read(1)
+            self.assertEqual(float(values[0, 0]), -9999.0)
+            self.assertAlmostEqual(float(values[0, 1]), 0.5, places=6)
+            self.assertAlmostEqual(float(values[1, 0]), 0.5, places=6)
+            self.assertAlmostEqual(float(values[1, 1]), 0.5, places=6)
+
     def test_supports_independent_band_scale_factors(self):
         output = self.root / "different-scale.tif"
         with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
