@@ -109,9 +109,9 @@ def process_sentinel2_scene(item_id: str, output_dir: str, *,
 
 
 def calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                  upper_c: float | None = None) -> dict:
-    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c),
-            "unit": "°C·day", "method": "daily mean temperature"}
+                  upper_c: float | None = None, method: str = "mean") -> dict:
+    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c, method=method),
+            "unit": "°C·day", "method": method}
 
 
 def calculate_rainfall(values_mm: list[float]) -> dict:
