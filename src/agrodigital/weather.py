@@ -12,7 +12,11 @@ def _finite_number(value, name: str) -> float:
 
 
 def growing_degree_days(tmin_c: float, tmax_c: float, base_c: float, *, upper_c: float | None = None, method: str = "mean") -> float:
-    """Daily GDD in °C·day. mean is the default; modified clips each temperature first."""
+    """Daily GDD in °C·day. Default mean: max(0, min((Tmin+Tmax)/2, upper)-base).
+
+    Modified: clamp Tmin and Tmax separately to [base, upper] (or no upper
+    ceiling), average the clipped values, then subtract base and floor at zero.
+    """
     tmin = _finite_number(tmin_c, "tmin_c")
     tmax = _finite_number(tmax_c, "tmax_c")
     base = _finite_number(base_c, "base_c")
