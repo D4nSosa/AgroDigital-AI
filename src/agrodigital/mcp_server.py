@@ -13,7 +13,7 @@ def main() -> None:
 
     from .agent_tools import (
         calculate_gdd, calculate_rainfall, get_capabilities, plan_analysis,
-        process_sentinel2_scene, search_satellite_scenes,
+        process_sentinel2_scene, search_satellite_scenes,\n        forecast_monthly, detect_anomalies, summarize_sentinel2_series,
     )
     from .raster import inspect_raster
     from .geo import validate_geojson
@@ -96,7 +96,7 @@ def main() -> None:
         """Sum supplied rainfall observations in millimetres; does not fetch weather data."""
         return calculate_rainfall(values_mm)
 
-    server.run(transport="stdio")
+    @server.tool()\n    def agro_forecast_monthly_series(observations: list[dict], periods: int = 12) -> dict:\n        """Return a labelled statistical forecast from supplied monthly observations; not a measurement."""\n        return forecast_monthly(observations, periods=periods)\n\n    @server.tool()\n    def agro_detect_monthly_anomalies(observations: list[dict], threshold: float = 2.5) -> dict:\n        """Detect statistical anomalies against calendar-month median climatology."""\n        return detect_anomalies(observations, threshold=threshold)\n\n    @server.tool()\n    def agro_summarize_sentinel2_timeseries(\n        scenes: list[dict], aoi_geojson: dict,\n        output_csv: str = "sentinel2_timeseries.csv",\n        composite_path: str = "sentinel2_ndvi_median_composite.tif",\n    ) -> dict:\n        """Calculate per-scene AOI NDVI statistics and a temporal median raster from aligned scenes."""\n        return summarize_sentinel2_series(\n            scenes, aoi_geojson, output_csv=output_csv, composite_path=composite_path\n        )\n\n    server.run(transport="stdio")
 
 
 if __name__ == "__main__":
