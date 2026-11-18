@@ -45,6 +45,10 @@ Do not imply these functions are available unless the package and dependencies a
 - Record command, parameters, package version and output path.
 - If the chatbot attachment is not visible to the script runtime, explain the limitation instead of inventing a local path.
 
+## Work directory and path safety
+
+Package file paths are confined to AGRODIGITAL_WORKDIR (default `./agrodigital_work`). Supply relative paths only; absolute paths, `..` traversal and symlinks are rejected. Set AGRODIGITAL_WORKDIR to a trusted directory containing the inputs and intended outputs.
+
 ## Network and remote sensing
 
 A repository URL does not provide network access to the current runtime. Before external catalog or weather queries, verify that web/network tools are available. If unavailable, request a user-provided export or give a reproducible workflow without claiming it ran.

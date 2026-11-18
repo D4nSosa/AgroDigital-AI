@@ -65,16 +65,19 @@ def main() -> None:
         item_id: str, output_dir: str,
         output_path: str | None = None,
         collection: str = "sentinel-2-l2a",
-        max_bytes_per_asset: int = 2_000_000_000,
+        max_bytes_per_asset: int = 500_000_000,
         use_scl: bool = True,
         overwrite: bool = False,
+        excluded_scl_classes: list[int] | None = None,
         aoi_geojson: dict | None = None,
     ) -> dict:
         """Download public Sentinel-2 assets, calculate NDVI and optionally clip to a GeoJSON AOI."""
         return process_sentinel2_scene(
             item_id, output_dir, output_path=output_path, collection=collection,
             max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl,
-            overwrite=overwrite, aoi_geojson=aoi_geojson,
+            overwrite=overwrite,
+            excluded_scl_classes=excluded_scl_classes if excluded_scl_classes is not None else (0, 1, 3, 8, 9, 10, 11),
+            aoi_geojson=aoi_geojson,
         )
 
     @server.tool()
@@ -84,9 +87,9 @@ def main() -> None:
 
     @server.tool()
     def agro_calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                           upper_c: float | None = None) -> dict:
+                           upper_c: float | None = None, method: str = "mean") -> dict:
         """Calculate daily growing degree days from supplied temperatures in Celsius."""
-        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c)
+        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c, method)
 
     @server.tool()
     def agro_calculate_rainfall(values_mm: list[float]) -> dict:

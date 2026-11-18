@@ -98,20 +98,22 @@ def process_sentinel2_scene(item_id: str, output_dir: str, *,
                             output_path: str | None = None,
                             collection: str = "sentinel-2-l2a",
                             endpoint: str = DEFAULT_STAC_URL,
-                            max_bytes_per_asset: int = 2_000_000_000,
+                            max_bytes_per_asset: int = 500_000_000,
                             use_scl: bool = True, overwrite: bool = False,
+                            excluded_scl_classes=(0, 1, 3, 8, 9, 10, 11),
                             aoi_geojson: dict | None = None) -> dict:
     return process_sentinel2_stac_item(
         item_id, output_dir, output_path=output_path, collection=collection,
         endpoint=endpoint, max_bytes_per_asset=max_bytes_per_asset,
-        use_scl=use_scl, overwrite=overwrite, aoi_geojson=aoi_geojson,
+        use_scl=use_scl, overwrite=overwrite, excluded_scl_classes=excluded_scl_classes,
+        aoi_geojson=aoi_geojson,
     )
 
 
 def calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                  upper_c: float | None = None) -> dict:
-    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c),
-            "unit": "°C·day", "method": "daily mean temperature"}
+                  upper_c: float | None = None, method: str = "mean") -> dict:
+    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c, method=method),
+            "unit": "°C·day", "method": method}
 
 
 def calculate_rainfall(values_mm: list[float]) -> dict:

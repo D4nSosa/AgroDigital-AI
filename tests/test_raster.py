@@ -1,8 +1,10 @@
 import importlib.util
+import os
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 if importlib.util.find_spec("rasterio") and importlib.util.find_spec("numpy"):
     import numpy as np
@@ -31,14 +33,16 @@ class RasterTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_inspect_metadata(self):
-        result = inspect_raster(self.source)
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            result = inspect_raster("source.tif")
         self.assertEqual(result["width"], 4)
         self.assertEqual(result["band_count"], 2)
         self.assertEqual(result["crs"], "EPSG:4326")
 
     def test_normalized_difference_output(self):
         output = self.root / "index.tif"
-        calculate_normalized_difference(self.source, output, 1, 2, label="test-index")
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            calculate_normalized_difference("source.tif", "index.tif", 1, 2, label="test-index")
         with rasterio.open(output) as ds:
             values = ds.read(1)
             self.assertAlmostEqual(float(values[0, 0]), 0.5)
@@ -50,10 +54,12 @@ class RasterTests(unittest.TestCase):
         aoi = self.root / "aoi.geojson"
         aoi.write_text(json.dumps({"type": "Polygon", "coordinates": [[[-1, 0.8], [-0.8, 0.8], [-0.8, 1], [-1, 1], [-1, 0.8]]]}))
         clipped = self.root / "clip.tif"
-        result = clip_raster(self.source, aoi, clipped)
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            result = clip_raster("source.tif", "aoi.geojson", "clip.tif")
         self.assertEqual(result["width"], 2)
         projected = self.root / "projected.tif"
-        result = reproject_raster(clipped, projected, "EPSG:3857")
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            result = reproject_raster("clip.tif", "projected.tif", "EPSG:3857")
         self.assertEqual(result["target_crs"], "EPSG:3857")
         self.assertGreater(result["width"], 0)
 
