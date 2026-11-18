@@ -11,7 +11,7 @@ class WeatherTests(unittest.TestCase):
         self.assertEqual(growing_degree_days(20, 40, 10, upper_c=30), 20)
 
     def test_gdd_modified_method_clips_each_temperature(self):
-        self.assertEqual(growing_degree_days(0, 40, 10, upper_c=30, method="modified"), 15)
+        self.assertEqual(growing_degree_days(0, 40, 10, upper_c=30, method="modified"), 10)
 
     def test_gdd_rejects_nan_infinity_and_booleans(self):
         for bad in (math.nan, math.inf, -math.inf):
