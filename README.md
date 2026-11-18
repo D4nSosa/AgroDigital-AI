@@ -64,6 +64,14 @@ agrodigital raster-info ./results/STAC_ITEM_ID_ndvi.tif
 
 The STAC-to-NDVI workflow downloads the red/NIR/SCL assets for one selected public Item, derives reflectance scaling/offsets from Item metadata, aligns categorical SCL to the red/NIR grid with nearest-neighbour if needed, and calculates NDVI. Through the Python agent API/MCP tool, the result can additionally be clipped to a supplied GeoJSON AOI. The CLI command currently processes the full scene. Review the Item's license, date, cloud cover and output provenance. The output is a scene-level index, not a yield or crop-health measurement.
 
+## Time series and forecasting (experimental)
+
+- `src/agrodigital/timeseries.py` summarizes already-processed, aligned single-band NDVI GeoTIFF scenes over a GeoJSON AOI. It exports per-scene mean, median, p10, p90 and valid-pixel counts to CSV and a per-pixel temporal median composite. It does not fetch imagery.
+- `src/agrodigital/forecast.py` provides a standard-library Theil-Sen trend on deseasonalized anomalies, monthly median climatology, approximate robust residual intervals and calendar-month anomaly flags. All future values are explicitly labelled PRONÓSTICO; intervals are approximate and not calibrated.
+- `AGENT_ENTRYPOINT.md` is a self-contained instruction document for AI sessions. It does not grant execution, network, Earth Engine or file access.
+- `notebooks_and_scripts/gee_timeseries.js` and `colab_timeseries.py` demonstrate Sentinel-2, Landsat, CHIRPS, ERA5-Land and NASA POWER data retrieval, charts and CSV exports. Earth Engine requires the user account/session; public data access is subject to provider terms.
+- `docs/REPORT_TEMPLATE.md` provides a provenance-aware reporting structure.
+
 ## Implemented capabilities
 
 - GeoJSON structural checks and coordinate-range validation.
