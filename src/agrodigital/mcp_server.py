@@ -84,9 +84,9 @@ def main() -> None:
 
     @server.tool()
     def agro_calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                           upper_c: float | None = None) -> dict:
+                           upper_c: float | None = None, method: str = "mean") -> dict:
         """Calculate daily growing degree days from supplied temperatures in Celsius."""
-        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c)
+        return calculate_gdd(tmin_c, tmax_c, base_c, upper_c, method)
 
     @server.tool()
     def agro_calculate_rainfall(values_mm: list[float]) -> dict:
