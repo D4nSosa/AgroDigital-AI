@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from .core import inspect_python_capabilities
+from .forecast import forecast_monthly_series, detect_monthly_anomalies
+from .timeseries import summarize_sentinel2_timeseries
 from .geo import GeoJSONError, validate_geojson
 from .sentinel2_stac import process_sentinel2_stac_item
 from .stac import DEFAULT_STAC_URL, search_stac
@@ -119,3 +121,22 @@ def calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
 def calculate_rainfall(values_mm: list[float]) -> dict:
     return {"rainfall_total_mm": rainfall_total(values_mm), "unit": "mm",
             "observations_count": len(values_mm)}
+
+
+def forecast_monthly(observations: list[dict], *, periods: int = 12) -> dict:
+    """Return explicitly labelled statistical forecasts from supplied monthly observations."""
+    return forecast_monthly_series(observations, periods=periods)
+
+
+def detect_anomalies(observations: list[dict], *, threshold: float = 2.5) -> dict:
+    """Detect departures from supplied calendar-month median climatology."""
+    return detect_monthly_anomalies(observations, threshold=threshold)
+
+
+def summarize_sentinel2_series(scenes: list[dict], aoi_geojson: dict, *,
+                               output_csv: str = "sentinel2_timeseries.csv",
+                               composite_path: str = "sentinel2_ndvi_median_composite.tif") -> dict:
+    """Summarize supplied aligned NDVI scenes inside a GeoJSON AOI."""
+    return summarize_sentinel2_timeseries(
+        scenes, aoi_geojson, output_csv=output_csv, composite_path=composite_path
+    )
