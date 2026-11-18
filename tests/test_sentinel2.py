@@ -10,6 +10,7 @@ if importlib.util.find_spec("rasterio") and importlib.util.find_spec("numpy"):
     import rasterio
     from rasterio.transform import from_origin
     from agrodigital.sentinel2 import calculate_sentinel2_ndvi, Sentinel2Error
+    from agrodigital.paths import WorkdirError
     from agrodigital.sentinel2_stac import _align_scl_to_red_grid
     AVAILABLE = True
 else:
@@ -66,6 +67,11 @@ class Sentinel2Tests(unittest.TestCase):
         with rasterio.open(result_path) as src:
             self.assertEqual((src.width, src.height), (2, 2))
             self.assertTrue(np.all(src.read(1) == 4))
+
+    def test_rejects_absolute_output_path(self):
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            with self.assertRaises(WorkdirError):
+                calculate_sentinel2_ndvi("red.tif", "nir.tif", str(self.root / "outside.tif"), scale_factor=10000)
 
     def test_rejects_invalid_scale(self):
         with self.assertRaises(Sentinel2Error):
