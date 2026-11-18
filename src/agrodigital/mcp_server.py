@@ -76,7 +76,7 @@ def main() -> None:
             item_id, output_dir, output_path=output_path, collection=collection,
             max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl,
             overwrite=overwrite,
-            excluded_scl_classes=excluded_scl_classes or (0, 1, 3, 8, 9, 10, 11),
+            excluded_scl_classes=excluded_scl_classes if excluded_scl_classes is not None else (0, 1, 3, 8, 9, 10, 11),
             aoi_geojson=aoi_geojson,
         )
 
