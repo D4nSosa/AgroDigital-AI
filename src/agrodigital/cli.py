@@ -17,7 +17,8 @@ def build_parser():
     gdd.add_argument("--tmin", type=float, required=True)
     gdd.add_argument("--tmax", type=float, required=True)
     gdd.add_argument("--base", type=float, required=True)
-    gdd.add_argument("--upper", type=float)\n    gdd.add_argument("--method", choices=["mean", "modified"], default="mean")
+    gdd.add_argument("--upper", type=float)
+    gdd.add_argument("--method", choices=["mean", "modified"], default="mean")
 
     rain = sub.add_parser("rainfall", help="Sum rainfall values in millimetres")
     rain.add_argument("values", nargs="+", type=float)
