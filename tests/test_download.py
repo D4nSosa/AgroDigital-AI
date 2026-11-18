@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from agrodigital.download import DownloadError, download_asset
+from agrodigital.download import DownloadError, download_asset\nfrom agrodigital.paths import WorkdirError
 
 
 class FakeResponse:
@@ -24,8 +24,8 @@ class FakeResponse:
 
 
 class DownloadTests(unittest.TestCase):
-    @patch("agrodigital.download.build_opener")
-    def test_download_and_checksum(self, opener_factory):
+    @patch("agrodigital.download._validate_public_https_url")\n    @patch("agrodigital.download.build_opener")
+    def test_download_and_checksum(self, opener_factory, validate_host):
         payload = b"public raster bytes"
         opener_factory.return_value.open.return_value = FakeResponse(payload)
         with tempfile.TemporaryDirectory() as temp:
@@ -46,7 +46,7 @@ class DownloadTests(unittest.TestCase):
             self.assertFalse(target.exists())
             self.assertFalse(target.with_name("asset.tif.part").exists())
 
-    def test_rejects_non_https(self):
+    @patch("agrodigital.download.socket.getaddrinfo")\n    def test_rejects_private_ip_resolution(self, getaddrinfo):\n        getaddrinfo.return_value = [(None, None, None, None, ("127.0.0.1", 443))]\n        with self.assertRaises(DownloadError):\n            download_asset("https://example.test/file", "unused.tif")\n\n    def test_rejects_non_https(self):
         with self.assertRaises(ValueError):
             download_asset("http://example.test/file", "unused.tif")
 
