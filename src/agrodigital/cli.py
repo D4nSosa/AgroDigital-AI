@@ -83,6 +83,7 @@ def build_parser():
     s2stac.add_argument("--output")
     s2stac.add_argument("--max-bytes-per-asset", type=int, default=500_000_000)
     s2stac.add_argument("--no-scl", action="store_true")
+    s2stac.add_argument("--exclude-scl", type=int, nargs="+", default=[0, 1, 3, 8, 9, 10, 11])
     s2stac.add_argument("--overwrite", action="store_true")
     return parser
 
@@ -140,7 +141,8 @@ def main(argv=None):
                 args.item_id, args.output_dir, output_path=args.output,
                 collection=args.collection, endpoint=args.endpoint,
                 max_bytes_per_asset=args.max_bytes_per_asset,
-                use_scl=not args.no_scl, overwrite=args.overwrite)
+                use_scl=not args.no_scl, overwrite=args.overwrite,
+                excluded_scl_classes=args.exclude_scl)
         else:
             raise ValueError(f"Unsupported command: {args.command}")
         print(json.dumps(result, indent=2, ensure_ascii=False))
