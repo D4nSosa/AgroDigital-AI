@@ -17,7 +17,7 @@ def build_parser():
     gdd.add_argument("--tmin", type=float, required=True)
     gdd.add_argument("--tmax", type=float, required=True)
     gdd.add_argument("--base", type=float, required=True)
-    gdd.add_argument("--upper", type=float)
+    gdd.add_argument("--upper", type=float)\n    gdd.add_argument("--method", choices=["mean", "modified"], default="mean")
 
     rain = sub.add_parser("rainfall", help="Sum rainfall values in millimetres")
     rain.add_argument("values", nargs="+", type=float)
@@ -93,8 +93,8 @@ def main(argv=None):
         if args.command == "check-geojson":
             result = validate_geojson(load_geojson(args.path))
         elif args.command == "gdd":
-            result = {"gdd_degree_days": growing_degree_days(args.tmin, args.tmax, args.base, upper_c=args.upper),
-                      "method": "daily mean temperature", "unit": "°C·day"}
+            result = {"gdd_degree_days": growing_degree_days(args.tmin, args.tmax, args.base, upper_c=args.upper, method=args.method),
+                      "method": args.method, "unit": "°C·day"}
         elif args.command == "rainfall":
             result = {"rainfall_total_mm": rainfall_total(args.values), "unit": "mm"}
         elif args.command == "capabilities":
