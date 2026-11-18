@@ -138,8 +138,9 @@ def process_sentinel2_stac_item(
         if key is None:
             continue
         asset_path = destination / f"{safe_id}_{logical_name}.tif"
+        asset_relative_path = asset_path.relative_to(workdir_root())
         downloaded[logical_name] = download_asset(
-            _asset_href(item, key), asset_path, max_bytes=max_bytes_per_asset,
+            _asset_href(item, key), asset_relative_path, max_bytes=max_bytes_per_asset,
             timeout=timeout, overwrite=overwrite,
         )
 
