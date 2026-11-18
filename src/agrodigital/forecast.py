@@ -67,22 +67,37 @@ def _robust_scale(values):
     return scale
 
 
+def _seasonal_slope(rows, x_values, y_values):
+    """Estimate trend from same-calendar-month pairs so seasonality cancels."""
+    by_month = {month: [] for month in range(1, 13)}
+    for (day, _), x, y in zip(rows, x_values, y_values):
+        by_month[day.month].append((x, y))
+    slopes = []
+    for pairs in by_month.values():
+        slopes.extend((y2 - y1) / (x2 - x1)
+                      for (x1, y1), (x2, y2) in combinations(pairs, 2)
+                      if x2 != x1)
+    if not slopes:
+        return _theil_sen(x_values, y_values)[0]
+    return median(slopes)
+
+
 def _seasonal_fit(rows):
     origin = _month_index(rows[0][0])
     x_values = [_month_index(day) - origin for day, _ in rows]
     values = [value for _, value in rows]
-    initial_slope, _, _ = _theil_sen(x_values, values)
+    initial_slope = _seasonal_slope(rows, x_values, values)
     detrended = [value - initial_slope * x for x, value in zip(x_values, values)]
     grouped = {month: [] for month in range(1, 13)}
     for (day, _), value in zip(rows, detrended):
         grouped[day.month].append(value)
     climatology = {month: median(items) for month, items in grouped.items() if items}
     deseasonalized = [value - climatology[day.month] for (day, value) in rows]
-    slope, intercept, _ = _theil_sen(x_values, deseasonalized)
+    slope = _seasonal_slope(rows, x_values, deseasonalized)
+    intercept = median(y - slope * x for x, y in zip(x_values, deseasonalized))
     residuals = [value - (intercept + slope * x + climatology[day.month])
                  for (day, value), x in zip(rows, x_values)]
     return origin, x_values, climatology, slope, intercept, residuals
-
 
 def detect_monthly_anomalies(observations, *, threshold: float = 2.5) -> dict:
     """Flag residual departures after removing robust linear trend and month climatology."""
