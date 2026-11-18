@@ -1,7 +1,9 @@
 import importlib.util
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 if importlib.util.find_spec("rasterio") and importlib.util.find_spec("numpy"):
     import numpy as np
@@ -34,8 +36,9 @@ class Sentinel2Tests(unittest.TestCase):
 
     def test_ndvi_and_scl_mask(self):
         output = self.root / "ndvi.tif"
-        result = calculate_sentinel2_ndvi(self.red, self.nir, output,
-                                           scale_factor=10000, scl_path=self.scl)
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            result = calculate_sentinel2_ndvi("red.tif", "nir.tif", "ndvi.tif",
+                                              scale_factor=10000, scl_path="scl.tif")
         self.assertTrue(result["scl_applied"])
         with rasterio.open(output) as src:
             values = src.read(1)
@@ -46,8 +49,9 @@ class Sentinel2Tests(unittest.TestCase):
 
     def test_supports_independent_band_scale_factors(self):
         output = self.root / "different-scale.tif"
-        calculate_sentinel2_ndvi(self.red, self.nir, output,
-                                 scale_factor=10000, nir_scale_factor=20000)
+        with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+            calculate_sentinel2_ndvi("red.tif", "nir.tif", "different-scale.tif",
+                                     scale_factor=10000, nir_scale_factor=20000)
         with rasterio.open(output) as src:
             self.assertAlmostEqual(float(src.read(1)[0, 0]), 0.2, places=6)
 
@@ -65,7 +69,8 @@ class Sentinel2Tests(unittest.TestCase):
 
     def test_rejects_invalid_scale(self):
         with self.assertRaises(Sentinel2Error):
-            calculate_sentinel2_ndvi(self.red, self.nir, self.root / "bad.tif", scale_factor=0)
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+                calculate_sentinel2_ndvi("red.tif", "nir.tif", "bad.tif", scale_factor=0)
 
     def test_rejects_unaligned_bands(self):
         shifted = self.root / "shifted.tif"
@@ -74,7 +79,8 @@ class Sentinel2Tests(unittest.TestCase):
         with rasterio.open(shifted, "w", **profile) as dst:
             dst.write(np.ones((2, 2), dtype="uint16"), 1)
         with self.assertRaises(Sentinel2Error):
-            calculate_sentinel2_ndvi(self.red, shifted, self.root / "bad.tif", scale_factor=10000)
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": str(self.root)}):
+                calculate_sentinel2_ndvi("red.tif", "shifted.tif", "bad.tif", scale_factor=10000)
 
 
 if __name__ == "__main__": unittest.main()
