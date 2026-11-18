@@ -113,7 +113,7 @@ def clip_raster(input_path: str | Path, geojson_path: str | Path,
                             software="AgroDigital-AI")
     return {"output": str(output_path), "width": int(image.shape[2]),
             "height": int(image.shape[1]), "bands": int(image.shape[0]),
-            "crs": inspect_raster(output_path)["crs"]}
+            "crs": profile.get("crs").to_string() if profile.get("crs") else None}
 
 
 def reproject_raster(input_path: str | Path, output_path: str | Path, target_crs: str) -> dict:
