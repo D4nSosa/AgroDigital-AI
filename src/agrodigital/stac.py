@@ -4,12 +4,26 @@ from __future__ import annotations
 import json
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urljoin, urlparse
-from urllib.request import HTTPRedirectHandler, Request, build_opener\n\nfrom . import __version__
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+from . import __version__
 
 DEFAULT_STAC_URL = "https://earth-search.aws.element84.com/v1"
 
 
-class _SameHostHTTPSRedirectHandler(HTTPRedirectHandler):\n    def __init__(self, allowed_host: str):\n        super().__init__()\n        self.allowed_host = allowed_host.lower()\n\n    def redirect_request(self, req, fp, code, msg, headers, newurl):\n        parsed = urlparse(newurl)\n        if parsed.scheme != "https" or parsed.hostname is None or parsed.hostname.lower() != self.allowed_host:\n            raise STACError("Refusing STAC redirect outside the configured HTTPS host.")\n        return super().redirect_request(req, fp, code, msg, headers, newurl)\n\n\nclass STACError(RuntimeError):
+class _SameHostHTTPSRedirectHandler(HTTPRedirectHandler):
+    def __init__(self, allowed_host: str):
+        super().__init__()
+        self.allowed_host = allowed_host.lower()
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urlparse(newurl)
+        if parsed.scheme != "https" or parsed.hostname is None or parsed.hostname.lower() != self.allowed_host:
+            raise STACError("Refusing STAC redirect outside the configured HTTPS host.")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+class STACError(RuntimeError):
     """Raised when a STAC catalog cannot be queried or returns invalid data."""
 
 
