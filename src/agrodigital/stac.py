@@ -4,9 +4,23 @@ from __future__ import annotations
 import json
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urljoin, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+from . import __version__
 
 DEFAULT_STAC_URL = "https://earth-search.aws.element84.com/v1"
+
+
+class _SameHostHTTPSRedirectHandler(HTTPRedirectHandler):
+    def __init__(self, allowed_netloc: str):
+        super().__init__()
+        self.allowed_netloc = allowed_netloc.lower()
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urlparse(newurl)
+        if parsed.scheme != "https" or parsed.netloc.lower() != self.allowed_netloc or parsed.username or parsed.password:
+            raise STACError("Refusing STAC redirect outside the configured HTTPS host.")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 class STACError(RuntimeError):
@@ -19,10 +33,14 @@ def _read_json(url: str, *, data: bytes | None = None, method: str = "GET",
         url, data=data, method=method,
         headers={"Accept": "application/geo+json, application/json",
                  "Content-Type": "application/json",
-                 "User-Agent": "AgroDigital-AI/0.4"},
+                 "User-Agent": f"AgroDigital-AI/{__version__}"},
     )
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        raise STACError("STAC requests must use HTTPS.")
+    opener = build_opener(_SameHostHTTPSRedirectHandler(parsed.netloc))
     try:
-        with urlopen(request, timeout=timeout) as response:
+        with opener.open(request, timeout=timeout) as response:
             result = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise STACError(f"STAC request failed: {exc}") from exc

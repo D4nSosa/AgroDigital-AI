@@ -1,4 +1,5 @@
 import hashlib
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,42 +14,63 @@ class FakeResponse:
         self.offset = 0
         self.headers = {"Content-Length": str(len(data))}
         self.url = url
-    def __enter__(self): return self
-    def __exit__(self, *args): return False
-    def geturl(self): return self.url
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def geturl(self):
+        return self.url
+
     def read(self, size=-1):
-        if size < 0: size = len(self.data)
+        if size < 0:
+            size = len(self.data)
         chunk = self.data[self.offset:self.offset + size]
         self.offset += len(chunk)
         return chunk
 
 
 class DownloadTests(unittest.TestCase):
+    @patch("agrodigital.download._validate_public_https_url")
     @patch("agrodigital.download.build_opener")
-    def test_download_and_checksum(self, opener_factory):
+    def test_download_and_checksum(self, opener_factory, validate_host):
         payload = b"public raster bytes"
         opener_factory.return_value.open.return_value = FakeResponse(payload)
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / "asset.tif"
-            result = download_asset("https://example.test/asset.tif", target,
-                                    sha256=hashlib.sha256(payload).hexdigest())
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": temp}):
+                result = download_asset(
+                    "https://example.test/asset.tif", "asset.tif",
+                    sha256=hashlib.sha256(payload).hexdigest(),
+                )
             self.assertEqual(target.read_bytes(), payload)
             self.assertTrue(result["verified_checksum"])
             self.assertFalse(target.with_name("asset.tif.part").exists())
 
+    @patch("agrodigital.download._validate_public_https_url")
     @patch("agrodigital.download.build_opener")
-    def test_size_limit_removes_partial_file(self, opener_factory):
+    def test_size_limit_removes_partial_file(self, opener_factory, validate_host):
         opener_factory.return_value.open.return_value = FakeResponse(b"too large")
         with tempfile.TemporaryDirectory() as temp:
             target = Path(temp) / "asset.tif"
-            with self.assertRaises(DownloadError):
-                download_asset("https://example.test/asset.tif", target, max_bytes=3)
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": temp}):
+                with self.assertRaises(DownloadError):
+                    download_asset("https://example.test/asset.tif", "asset.tif", max_bytes=3)
             self.assertFalse(target.exists())
             self.assertFalse(target.with_name("asset.tif.part").exists())
 
+    @patch("agrodigital.download.socket.getaddrinfo")
+    def test_rejects_private_ip_resolution(self, getaddrinfo):
+        getaddrinfo.return_value = [(None, None, None, None, ("127.0.0.1", 443))]
+        with self.assertRaises(DownloadError):
+            download_asset("https://example.test/file", "unused.tif")
+
     def test_rejects_non_https(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(DownloadError):
             download_asset("http://example.test/file", "unused.tif")
 
 
-if __name__ == "__main__": unittest.main()
+if __name__ == "__main__":
+    unittest.main()

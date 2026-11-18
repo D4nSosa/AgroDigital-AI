@@ -65,7 +65,7 @@ def main() -> None:
         item_id: str, output_dir: str,
         output_path: str | None = None,
         collection: str = "sentinel-2-l2a",
-        max_bytes_per_asset: int = 2_000_000_000,
+        max_bytes_per_asset: int = 500_000_000,
         use_scl: bool = True,
         overwrite: bool = False,
         aoi_geojson: dict | None = None,
