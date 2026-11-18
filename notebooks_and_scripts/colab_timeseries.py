@@ -16,7 +16,8 @@ SCALE_S2_M = 10
 SCALE_LANDSAT_M = 30
 
 # ---- Setup ----
-!pip -q install earthengine-api pandas matplotlib
+import subprocess, sys
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "earthengine-api", "pandas", "matplotlib"])
 
 import ee
 import json
