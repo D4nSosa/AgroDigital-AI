@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import re
-import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -12,6 +11,7 @@ from .geo import validate_geojson
 from .raster import clip_raster
 from .sentinel2 import calculate_sentinel2_ndvi
 from .stac import DEFAULT_STAC_URL, get_stac_item
+from .paths import resolve_work_path, workdir_root
 
 
 class Sentinel2STACError(ValueError):
@@ -103,8 +103,9 @@ def _align_scl_to_red_grid(scl_path: str | Path, red_path: str | Path,
 def process_sentinel2_stac_item(
     item_id: str, output_dir: str | Path, *, output_path: str | Path | None = None,
     collection: str = "sentinel-2-l2a", endpoint: str = DEFAULT_STAC_URL,
-    max_bytes_per_asset: int = 2_000_000_000, timeout: int = 60,
+    max_bytes_per_asset: int = 500_000_000, timeout: int = 60,
     use_scl: bool = True, overwrite: bool = False,
+    excluded_scl_classes=(0, 1, 3, 8, 9, 10, 11),
     aoi_geojson: dict | None = None,
 ) -> dict:
     """Download red/NIR/(optional SCL), calculate NDVI and optionally clip to a GeoJSON AOI.
@@ -130,7 +131,7 @@ def process_sentinel2_stac_item(
 
     red_params = _reflectance_parameters(item, red_key)
     nir_params = _reflectance_parameters(item, nir_key)
-    destination = Path(output_dir)
+    destination = resolve_work_path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     safe_id = re.sub(r"[^A-Za-z0-9._-]+", "_", str(item.get("id", item_id)))
     downloaded = {}
@@ -138,8 +139,9 @@ def process_sentinel2_stac_item(
         if key is None:
             continue
         asset_path = destination / f"{safe_id}_{logical_name}.tif"
+        asset_relative_path = asset_path.relative_to(workdir_root())
         downloaded[logical_name] = download_asset(
-            _asset_href(item, key), asset_path, max_bytes=max_bytes_per_asset,
+            _asset_href(item, key), asset_relative_path, max_bytes=max_bytes_per_asset,
             timeout=timeout, overwrite=overwrite,
         )
 
@@ -150,24 +152,34 @@ def process_sentinel2_stac_item(
             destination / f"{safe_id}_scl_aligned.tif",
         )
 
-    final_path = Path(output_path) if output_path else destination / (
+    final_path = resolve_work_path(output_path, create_parent=True) if output_path else destination / (
         f"{safe_id}_ndvi_aoi.tif" if aoi_geojson is not None else f"{safe_id}_ndvi.tif"
     )
     final_path.parent.mkdir(parents=True, exist_ok=True)
     full_path = final_path.with_name(final_path.stem + "_full" + final_path.suffix) if aoi_geojson is not None else final_path
+    work_root = workdir_root()
     scene_processing = calculate_sentinel2_ndvi(
-        downloaded["red"]["path"], downloaded["nir"]["path"], full_path,
+        Path(downloaded["red"]["path"]).relative_to(work_root),
+        Path(downloaded["nir"]["path"]).relative_to(work_root),
+        full_path.relative_to(work_root),
         scale_factor=red_params["scale_factor"],
         nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
-        scl_path=scl_aligned_path,
+        scl_path=Path(scl_aligned_path).relative_to(work_root) if scl_aligned_path else None,
+        excluded_scl_classes=excluded_scl_classes,
     )
     aoi_clip = None
     if aoi_geojson is not None:
-        with tempfile.TemporaryDirectory(prefix="agrodigital-aoi-") as temp_dir:
-            aoi_path = Path(temp_dir) / "aoi.geojson"
-            aoi_path.write_text(json.dumps(aoi_geojson), encoding="utf-8")
-            aoi_clip = clip_raster(full_path, aoi_path, final_path, crop=True)
+        aoi_path = destination / f"{safe_id}_aoi.geojson"
+        aoi_path.write_text(json.dumps(aoi_geojson), encoding="utf-8")
+        root = workdir_root()
+        try:
+            aoi_clip = clip_raster(
+                full_path.relative_to(root), aoi_path.relative_to(root),
+                final_path.relative_to(root), crop=True,
+            )
+        finally:
+            aoi_path.unlink(missing_ok=True)
     processing = {
         "scene_ndvi": scene_processing,
         "aoi_clip": aoi_clip,

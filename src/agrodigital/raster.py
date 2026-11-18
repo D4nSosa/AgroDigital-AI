@@ -7,6 +7,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .paths import resolve_work_path
+
 
 class RasterError(ValueError):
     """Raised for unsupported or invalid raster operations."""
@@ -22,6 +24,7 @@ def _rasterio():
 
 def inspect_raster(path: str | Path) -> dict:
     """Return raster metadata without loading the full pixel array."""
+    path = resolve_work_path(path)
     rasterio = _rasterio()
     with rasterio.open(path) as src:
         bounds = src.bounds
@@ -39,6 +42,8 @@ def inspect_raster(path: str | Path) -> dict:
 def calculate_normalized_difference(input_path: str | Path, output_path: str | Path,
                                     band_a: int, band_b: int, *, label: str = "normalized_difference") -> dict:
     """Write (band_a-band_b)/(band_a+band_b) as a float32 GeoTIFF."""
+    input_path = resolve_work_path(input_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
     import numpy as np
     rasterio = _rasterio()
     if band_a < 1 or band_b < 1 or band_a == band_b:
@@ -64,12 +69,15 @@ def calculate_normalized_difference(input_path: str | Path, output_path: str | P
             dst.update_tags(AREA_OR_POINT="Area")
     return {"output": str(output_path), "formula": "(A-B)/(A+B)",
             "band_a": band_a, "band_b": band_b, "nodata": -9999.0,
-            "crs": inspect_raster(output_path)["crs"]}
+            "crs": profile.get("crs").to_string() if profile.get("crs") else None}
 
 
 def clip_raster(input_path: str | Path, geojson_path: str | Path,
                 output_path: str | Path, *, crop: bool = True) -> dict:
     """Mask a raster using GeoJSON features (RFC 7946 coordinates)."""
+    input_path = resolve_work_path(input_path)
+    geojson_path = resolve_work_path(geojson_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
     rasterio = _rasterio()
     from rasterio.mask import mask
     from rasterio.warp import transform_geom
@@ -103,11 +111,13 @@ def clip_raster(input_path: str | Path, geojson_path: str | Path,
                             software="AgroDigital-AI")
     return {"output": str(output_path), "width": int(image.shape[2]),
             "height": int(image.shape[1]), "bands": int(image.shape[0]),
-            "crs": inspect_raster(output_path)["crs"]}
+            "crs": profile.get("crs").to_string() if profile.get("crs") else None}
 
 
 def reproject_raster(input_path: str | Path, output_path: str | Path, target_crs: str) -> dict:
     """Reproject every band to an explicit target CRS using nearest-neighbour resampling."""
+    input_path = resolve_work_path(input_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
     rasterio = _rasterio()
     from rasterio.warp import calculate_default_transform, reproject, Resampling
     with rasterio.open(input_path) as src:

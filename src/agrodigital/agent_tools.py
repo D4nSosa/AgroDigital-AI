@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from .core import inspect_python_capabilities
+from .forecast import forecast_monthly_series, detect_monthly_anomalies
+from .timeseries import summarize_sentinel2_timeseries
 from .geo import GeoJSONError, validate_geojson
 from .sentinel2_stac import process_sentinel2_stac_item
 from .stac import DEFAULT_STAC_URL, search_stac
@@ -98,22 +100,43 @@ def process_sentinel2_scene(item_id: str, output_dir: str, *,
                             output_path: str | None = None,
                             collection: str = "sentinel-2-l2a",
                             endpoint: str = DEFAULT_STAC_URL,
-                            max_bytes_per_asset: int = 2_000_000_000,
+                            max_bytes_per_asset: int = 500_000_000,
                             use_scl: bool = True, overwrite: bool = False,
+                            excluded_scl_classes=(0, 1, 3, 8, 9, 10, 11),
                             aoi_geojson: dict | None = None) -> dict:
     return process_sentinel2_stac_item(
         item_id, output_dir, output_path=output_path, collection=collection,
         endpoint=endpoint, max_bytes_per_asset=max_bytes_per_asset,
-        use_scl=use_scl, overwrite=overwrite, aoi_geojson=aoi_geojson,
+        use_scl=use_scl, overwrite=overwrite, excluded_scl_classes=excluded_scl_classes,
+        aoi_geojson=aoi_geojson,
     )
 
 
 def calculate_gdd(tmin_c: float, tmax_c: float, base_c: float,
-                  upper_c: float | None = None) -> dict:
-    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c),
-            "unit": "°C·day", "method": "daily mean temperature"}
+                  upper_c: float | None = None, method: str = "mean") -> dict:
+    return {"gdd_degree_days": growing_degree_days(tmin_c, tmax_c, base_c, upper_c=upper_c, method=method),
+            "unit": "°C·day", "method": method}
 
 
 def calculate_rainfall(values_mm: list[float]) -> dict:
     return {"rainfall_total_mm": rainfall_total(values_mm), "unit": "mm",
             "observations_count": len(values_mm)}
+
+
+def forecast_monthly(observations: list[dict], *, periods: int = 12) -> dict:
+    """Return explicitly labelled statistical forecasts from supplied monthly observations."""
+    return forecast_monthly_series(observations, periods=periods)
+
+
+def detect_anomalies(observations: list[dict], *, threshold: float = 2.5) -> dict:
+    """Detect departures from supplied calendar-month median climatology."""
+    return detect_monthly_anomalies(observations, threshold=threshold)
+
+
+def summarize_sentinel2_series(scenes: list[dict], aoi_geojson: dict, *,
+                               output_csv: str = "sentinel2_timeseries.csv",
+                               composite_path: str = "sentinel2_ndvi_median_composite.tif") -> dict:
+    """Summarize supplied aligned NDVI scenes inside a GeoJSON AOI."""
+    return summarize_sentinel2_timeseries(
+        scenes, aoi_geojson, output_csv=output_csv, composite_path=composite_path
+    )

@@ -1,5 +1,7 @@
 # Roadmap
 
+Current Python package version: **0.5.0**. This is distinct from the portable Skill's own metadata version.
+
 Roadmap items are targets, not claims of existing functionality.
 
 ## v0.1 foundation — complete
@@ -39,7 +41,10 @@ Roadmap items are targets, not claims of existing functionality.
 - [ ] Add hosted/remote MCP deployment only after a concrete hosting and access-control design.
 
 ## v0.5 agroforestry and decision support
-- [ ] Temporal composites, per-pixel change detection and zonal statistics.
+- [x] Basic Sentinel-2 NDVI time-series AOI statistics and temporal median composite from supplied aligned scenes.
+- [x] Exploratory seasonal forecast and monthly anomaly module (not a validated agronomic model).
+- [x] Self-contained agent entrypoint, Earth Engine/Colab multi-source time-series scripts and report template.
+- [ ] Temporal composites and zonal statistics directly from multi-scene STAC retrieval.
 - [ ] Sentinel-1 GRD preprocessing and comparable backscatter time series.
 - [ ] Landsat search and processing.
 - [ ] Weather observation/forecast adapters with source/timezone validation.

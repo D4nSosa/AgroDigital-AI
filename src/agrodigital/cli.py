@@ -18,6 +18,7 @@ def build_parser():
     gdd.add_argument("--tmax", type=float, required=True)
     gdd.add_argument("--base", type=float, required=True)
     gdd.add_argument("--upper", type=float)
+    gdd.add_argument("--method", choices=["mean", "modified"], default="mean")
 
     rain = sub.add_parser("rainfall", help="Sum rainfall values in millimetres")
     rain.add_argument("values", nargs="+", type=float)
@@ -59,7 +60,7 @@ def build_parser():
     download = sub.add_parser("download-asset", help="Download one public/authorized HTTPS asset with a size limit")
     download.add_argument("url")
     download.add_argument("output")
-    download.add_argument("--max-bytes", type=int, default=2_000_000_000)
+    download.add_argument("--max-bytes", type=int, default=500_000_000)
     download.add_argument("--sha256")
     download.add_argument("--timeout", type=int, default=60)
     download.add_argument("--overwrite", action="store_true")
@@ -81,8 +82,9 @@ def build_parser():
     s2stac.add_argument("--endpoint", default="https://earth-search.aws.element84.com/v1")
     s2stac.add_argument("--output-dir", required=True)
     s2stac.add_argument("--output")
-    s2stac.add_argument("--max-bytes-per-asset", type=int, default=2_000_000_000)
+    s2stac.add_argument("--max-bytes-per-asset", type=int, default=500_000_000)
     s2stac.add_argument("--no-scl", action="store_true")
+    s2stac.add_argument("--exclude-scl", type=int, nargs="+", default=[0, 1, 3, 8, 9, 10, 11])
     s2stac.add_argument("--overwrite", action="store_true")
     return parser
 
@@ -93,8 +95,8 @@ def main(argv=None):
         if args.command == "check-geojson":
             result = validate_geojson(load_geojson(args.path))
         elif args.command == "gdd":
-            result = {"gdd_degree_days": growing_degree_days(args.tmin, args.tmax, args.base, upper_c=args.upper),
-                      "method": "daily mean temperature", "unit": "°C·day"}
+            result = {"gdd_degree_days": growing_degree_days(args.tmin, args.tmax, args.base, upper_c=args.upper, method=args.method),
+                      "method": args.method, "unit": "°C·day"}
         elif args.command == "rainfall":
             result = {"rainfall_total_mm": rainfall_total(args.values), "unit": "mm"}
         elif args.command == "capabilities":
@@ -140,7 +142,8 @@ def main(argv=None):
                 args.item_id, args.output_dir, output_path=args.output,
                 collection=args.collection, endpoint=args.endpoint,
                 max_bytes_per_asset=args.max_bytes_per_asset,
-                use_scl=not args.no_scl, overwrite=args.overwrite)
+                use_scl=not args.no_scl, overwrite=args.overwrite,
+                excluded_scl_classes=args.exclude_scl)
         else:
             raise ValueError(f"Unsupported command: {args.command}")
         print(json.dumps(result, indent=2, ensure_ascii=False))

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .paths import resolve_work_path
+
 
 class Sentinel2Error(ValueError):
     """Raised for invalid Sentinel-2 processing inputs."""
@@ -19,10 +21,20 @@ def calculate_sentinel2_ndvi(red_path: str | Path, nir_path: str | Path,
                              excluded_scl_classes=DEFAULT_SCL_EXCLUDED) -> dict:
     """Calculate NDVI from Sentinel-2 L2A red/NIR GeoTIFFs.
 
+    SCL classes 0 (no data), 1 (saturated/defective), 3 (cloud shadow),
+    8 (medium cloud), 9 (high cloud), 10 (thin cirrus) and 11 (snow/ice)
+    are excluded by default. Classes 2 (dark area/topographic shadow), 6
+    (water) and 7 (unclassified) are retained unless explicitly excluded.
+
     Reflectance is DN / band_scale_factor + band_offset. Inputs must share
     exactly the same pixel grid and CRS. Scale factors and offsets are explicit
     because product encoding and processing baseline can differ.
     """
+    red_path = resolve_work_path(red_path)
+    nir_path = resolve_work_path(nir_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
+    scl_path = resolve_work_path(scl_path) if scl_path is not None else None
+
     try:
         import numpy as np
         import rasterio

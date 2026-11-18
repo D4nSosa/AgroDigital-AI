@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .paths import resolve_work_path
+
 
 class VectorError(ValueError):
     """Raised for invalid vector data or coordinate transformations."""
@@ -16,6 +18,8 @@ def reproject_geojson(input_path: str | Path, output_path: str | Path,
     GeoJSON consumers generally assume WGS84. For projected output, prefer a CRS-aware
     container such as GeoPackage; this helper marks the coordinate system explicitly.
     """
+    input_path = resolve_work_path(input_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
     try:
         from pyproj import Transformer
     except ImportError as exc:
@@ -60,6 +64,7 @@ def reproject_geojson(input_path: str | Path, output_path: str | Path,
 
 def validate_topology(geojson_path: str | Path) -> dict:
     """Validate geometry topology with Shapely; does not repair geometries."""
+    geojson_path = resolve_work_path(geojson_path)
     try:
         from shapely.geometry import shape
     except ImportError as exc:

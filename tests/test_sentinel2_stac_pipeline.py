@@ -1,3 +1,4 @@
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -39,7 +40,8 @@ class Sentinel2STACPipelineTests(unittest.TestCase):
             }
 
             def fake_download(url, destination, **kwargs):
-                destination = Path(destination)
+                destination = Path(temp) / destination
+                destination.parent.mkdir(parents=True, exist_ok=True)
                 if destination.name.endswith("_red.tif"):
                     with rasterio.open(destination, "w", **profile) as dst:
                         dst.write(np.full((2, 2), 2000, dtype="uint16"), 1)
@@ -55,10 +57,11 @@ class Sentinel2STACPipelineTests(unittest.TestCase):
                 return {"path": str(destination), "bytes": destination.stat().st_size,
                         "sha256": "synthetic", "url": url, "verified_checksum": False}
 
-            with patch("agrodigital.sentinel2_stac.get_stac_item", return_value=item), \
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": temp}), \
+                 patch("agrodigital.sentinel2_stac.get_stac_item", return_value=item), \
                  patch("agrodigital.sentinel2_stac.download_asset", side_effect=fake_download):
                 result = process_sentinel2_stac_item(
-                    "synthetic-scene", root / "out", use_scl=True
+                    "synthetic-scene", "out", use_scl=True
                 )
 
             self.assertEqual(result["status"], "processed")
