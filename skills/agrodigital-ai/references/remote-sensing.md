@@ -22,5 +22,9 @@ Multi-date imagery can contribute to management-zone delineation when combined w
 ## Sentinel-2 AgroDigital-AI package boundary
 The existing v0.4 workflow searches public STAC metadata and processes one selected Sentinel-2 L2A Item: downloads red/NIR and optional SCL assets, applies metadata scale/offset, aligns categorical SCL with nearest-neighbour when needed, calculates NDVI and can clip to a supplied GeoJSON AOI through the agent API. It does not provide atmospheric correction, robust cloud/shadow masking, temporal composites, yield models or Sentinel-1 processing.
 
+## Sentinel-2 SCL masking
+
+The Sentinel-2 Scene Classification Layer (SCL) classes have these relevant meanings: 0 no data, 1 saturated/defective, 2 dark area/topographic shadow, 3 cloud shadow, 4 vegetation, 5 bare soil, 6 water, 7 unclassified, 8 medium-probability cloud, 9 high-probability cloud, 10 thin cirrus, and 11 snow/ice. AgroDigital-AI defaults to excluding classes 0, 1, 3, 8, 9, 10 and 11. Classes 2, 6 and 7 are retained by default; users may change the excluded class list through the CLI or MCP tool. This is a class-based mask, not a guarantee of cloud-free pixels or a complete atmospheric correction.
+
 ## Interpretation
 Describe spatial/temporal patterns, not unsupported causes. A low index may reflect bare soil, crop stage, harvest, water stress, clouds/shadows, soil background or other factors. Use ground truth before operational recommendations.
