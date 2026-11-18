@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .paths import resolve_work_path
+
 
 class Sentinel2Error(ValueError):
     """Raised for invalid Sentinel-2 processing inputs."""
@@ -28,6 +30,11 @@ def calculate_sentinel2_ndvi(red_path: str | Path, nir_path: str | Path,
     exactly the same pixel grid and CRS. Scale factors and offsets are explicit
     because product encoding and processing baseline can differ.
     """
+    red_path = resolve_work_path(red_path)
+    nir_path = resolve_work_path(nir_path)
+    output_path = resolve_work_path(output_path, create_parent=True)
+    scl_path = resolve_work_path(scl_path) if scl_path is not None else None
+
     try:
         import numpy as np
         import rasterio
