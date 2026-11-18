@@ -64,7 +64,7 @@ def calculate_normalized_difference(input_path: str | Path, output_path: str | P
             dst.update_tags(AREA_OR_POINT="Area")
     return {"output": str(output_path), "formula": "(A-B)/(A+B)",
             "band_a": band_a, "band_b": band_b, "nodata": -9999.0,
-            "crs": inspect_raster(output_path)["crs"]}
+            "crs": profile.get("crs").to_string() if profile.get("crs") else None}
 
 
 def clip_raster(input_path: str | Path, geojson_path: str | Path,
