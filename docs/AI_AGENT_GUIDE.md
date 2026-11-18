@@ -54,3 +54,8 @@ The MCP server runs where it is configured; it does not upload user files to a c
 ## Filesystem and Sentinel-2 mask defaults
 
 Package-managed local paths must be relative to `AGRODIGITAL_WORKDIR` (default `./agrodigital_work`); absolute paths, `..` and symlinks are rejected. The default Sentinel-2 SCL exclusions are classes 0, 1, 3, 8, 9, 10 and 11. Classes 2, 6 and 7 remain included by default. Configure the exclusion list through the CLI `--exclude-scl` option or the MCP `excluded_scl_classes` argument. This mask is not a guarantee of cloud-free pixels.
+
+
+## GDD calculation methods
+
+The default GDD method is the daily mean method: `max(0, min((Tmin + Tmax) / 2, upper) - base)`. The optional `modified` method clips Tmin and Tmax independently to the base and optional upper thresholds before averaging, then subtracts the base threshold. Select `--method modified` in the CLI or `method="modified"` in the agent/MCP calculation. Inputs must be finite numeric Celsius values; booleans, NaN and infinities are rejected.
