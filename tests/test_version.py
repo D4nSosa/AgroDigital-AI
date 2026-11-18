@@ -6,7 +6,7 @@ import agrodigital
 
 
 class PackageVersionTests(unittest.TestCase):
-    """Regression guard for the single package-version source of truth."""
+    """Regression guard for package metadata and release-tag consistency."""
     def test_package_and_build_metadata_versions_match(self):
         root = Path(__file__).resolve().parents[1]
         with (root / "pyproject.toml").open("rb") as stream:
