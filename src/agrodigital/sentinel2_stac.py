@@ -130,7 +130,7 @@ def process_sentinel2_stac_item(
 
     red_params = _reflectance_parameters(item, red_key)
     nir_params = _reflectance_parameters(item, nir_key)
-    destination = Path(output_dir)
+    destination = resolve_work_path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     safe_id = re.sub(r"[^A-Za-z0-9._-]+", "_", str(item.get("id", item_id)))
     downloaded = {}
