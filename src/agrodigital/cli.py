@@ -59,7 +59,7 @@ def build_parser():
     download = sub.add_parser("download-asset", help="Download one public/authorized HTTPS asset with a size limit")
     download.add_argument("url")
     download.add_argument("output")
-    download.add_argument("--max-bytes", type=int, default=2_000_000_000)
+    download.add_argument("--max-bytes", type=int, default=500_000_000)
     download.add_argument("--sha256")
     download.add_argument("--timeout", type=int, default=60)
     download.add_argument("--overwrite", action="store_true")
@@ -81,7 +81,7 @@ def build_parser():
     s2stac.add_argument("--endpoint", default="https://earth-search.aws.element84.com/v1")
     s2stac.add_argument("--output-dir", required=True)
     s2stac.add_argument("--output")
-    s2stac.add_argument("--max-bytes-per-asset", type=int, default=2_000_000_000)
+    s2stac.add_argument("--max-bytes-per-asset", type=int, default=500_000_000)
     s2stac.add_argument("--no-scl", action="store_true")
     s2stac.add_argument("--overwrite", action="store_true")
     return parser
