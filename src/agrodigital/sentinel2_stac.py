@@ -156,8 +156,11 @@ def process_sentinel2_stac_item(
     )
     final_path.parent.mkdir(parents=True, exist_ok=True)
     full_path = final_path.with_name(final_path.stem + "_full" + final_path.suffix) if aoi_geojson is not None else final_path
+    work_root = workdir_root()
     scene_processing = calculate_sentinel2_ndvi(
-        downloaded["red"]["path"], downloaded["nir"]["path"], full_path,
+        Path(downloaded["red"]["path"]).relative_to(work_root),
+        Path(downloaded["nir"]["path"]).relative_to(work_root),
+        full_path.relative_to(work_root),
         scale_factor=red_params["scale_factor"],
         nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
