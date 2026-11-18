@@ -1,8 +1,10 @@
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 if importlib.util.find_spec("pyproj") and importlib.util.find_spec("shapely"):
     from agrodigital.vector import reproject_geojson, validate_topology
@@ -19,12 +21,14 @@ class VectorTests(unittest.TestCase):
             target = Path(folder) / "target.geojson"
             source.write_text(json.dumps({"type": "Feature", "properties": {},
                 "geometry": {"type": "Point", "coordinates": [111319.49079327357, 0]}}))
-            result = reproject_geojson(source, target, "EPSG:3857", "EPSG:4326")
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": folder}):
+                result = reproject_geojson("source.geojson", "target.geojson", "EPSG:3857", "EPSG:4326")
             output = json.loads(target.read_text())
             self.assertEqual(result["target_crs"], "EPSG:4326")
             self.assertEqual(output["agrodigital:coordinate_reference_system"], "EPSG:4326")
             self.assertAlmostEqual(output["geometry"]["coordinates"][0], 1.0, places=5)
-            self.assertTrue(validate_topology(target)["valid"])
+            with patch.dict(os.environ, {"AGRODIGITAL_WORKDIR": folder}):
+                self.assertTrue(validate_topology("target.geojson")["valid"])
 
 
 if __name__ == "__main__":
