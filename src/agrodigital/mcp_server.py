@@ -68,13 +68,16 @@ def main() -> None:
         max_bytes_per_asset: int = 500_000_000,
         use_scl: bool = True,
         overwrite: bool = False,
+        excluded_scl_classes: list[int] | None = None,
         aoi_geojson: dict | None = None,
     ) -> dict:
         """Download public Sentinel-2 assets, calculate NDVI and optionally clip to a GeoJSON AOI."""
         return process_sentinel2_scene(
             item_id, output_dir, output_path=output_path, collection=collection,
             max_bytes_per_asset=max_bytes_per_asset, use_scl=use_scl,
-            overwrite=overwrite, aoi_geojson=aoi_geojson,
+            overwrite=overwrite,
+            excluded_scl_classes=excluded_scl_classes or (0, 1, 3, 8, 9, 10, 11),
+            aoi_geojson=aoi_geojson,
         )
 
     @server.tool()
