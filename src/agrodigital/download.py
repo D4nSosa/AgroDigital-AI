@@ -1,57 +1,78 @@
-"""Bounded, checksum-verified HTTPS asset downloads."""
+"""Bounded, checksum-verified HTTPS asset downloads with SSRF protection."""
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import os
+import socket
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
+
+from . import __version__
+from .paths import resolve_work_path
 
 
 class DownloadError(RuntimeError):
     """Raised when a remote asset cannot be downloaded safely."""
 
 
-class _HTTPSOnlyRedirectHandler(HTTPRedirectHandler):
+def _validate_public_https_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+        raise DownloadError("Asset URL must be HTTPS and must not embed credentials.")
+    host = parsed.hostname
+    try:
+        literal = ipaddress.ip_address(host)
+        addresses = [literal]
+    except ValueError:
+        try:
+            addresses = [ipaddress.ip_address(item[4][0]) for item in socket.getaddrinfo(
+                host, parsed.port or 443, type=socket.SOCK_STREAM
+            )]
+        except (OSError, ValueError) as exc:
+            raise DownloadError(f"Could not safely resolve asset host '{host}': {exc}") from exc
+    if not addresses:
+        raise DownloadError(f"Asset host '{host}' resolved to no addresses.")
+    for address in addresses:
+        if not address.is_global:
+            raise DownloadError(f"Refusing non-public destination address: {address}")
+    return host.lower()
+
+
+class _SafeRedirectHandler(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        parsed = urlparse(newurl)
-        if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
-            raise DownloadError("Refusing redirect to a non-HTTPS or credential-bearing URL.")
+        _validate_public_https_url(newurl)
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def download_asset(url: str, destination: str | Path, *, max_bytes: int = 2_000_000_000,
+def download_asset(url: str, destination: str | Path, *, max_bytes: int = 500_000_000,
                   sha256: str | None = None, timeout: int = 60, overwrite: bool = False,
                   chunk_size: int = 1024 * 1024) -> dict:
-    """Download one HTTPS asset with a hard byte limit and optional SHA-256 check.
+    """Download one public HTTPS asset, confined to the configured work directory.
 
-    Writes to a sibling .part file and atomically renames only after validation.
-    Does not implement resume, STAC signing or authentication.
+    Resolves and rejects private, loopback, link-local and reserved addresses for
+    the initial URL and every redirect. Writes atomically after size/checksum checks.
     """
-    parsed = urlparse(url)
-    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
-        raise ValueError("Asset URL must be HTTPS and must not embed credentials.")
+    _validate_public_https_url(url)
     if max_bytes <= 0 or timeout <= 0 or chunk_size <= 0:
         raise ValueError("max_bytes, timeout and chunk_size must be positive.")
     if sha256 is not None and (len(sha256) != 64 or any(c not in "0123456789abcdefABCDEF" for c in sha256)):
         raise ValueError("sha256 must contain exactly 64 hexadecimal characters.")
 
-    target = Path(destination)
-    target.parent.mkdir(parents=True, exist_ok=True)
+    target = resolve_work_path(destination, create_parent=True)
     if target.exists() and not overwrite:
         raise FileExistsError(f"Destination already exists: {target}")
     partial = target.with_name(target.name + ".part")
     digest = hashlib.sha256()
     total = 0
-    opener = build_opener(_HTTPSOnlyRedirectHandler())
-    request = Request(url, headers={"User-Agent": "AgroDigital-AI/0.3", "Accept": "*/*"})
+    opener = build_opener(_SafeRedirectHandler())
+    request = Request(url, headers={"User-Agent": f"AgroDigital-AI/{__version__}", "Accept": "*/*"})
     try:
         with opener.open(request, timeout=timeout) as response:
             final_url = response.geturl()
-            final = urlparse(final_url)
-            if final.scheme != "https" or not final.hostname:
-                raise DownloadError("Final asset URL is not HTTPS.")
+            _validate_public_https_url(final_url)
             length = response.headers.get("Content-Length")
             if length:
                 try:
@@ -87,7 +108,6 @@ def download_asset(url: str, destination: str | Path, *, max_bytes: int = 2_000_
             raise
         raise DownloadError(f"Asset download failed: {exc}") from exc
     finally:
-        # A partial file is never presented as a completed asset.
         if partial.exists():
             try:
                 partial.unlink()
