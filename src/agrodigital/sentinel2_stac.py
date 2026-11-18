@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import re
-import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -12,7 +11,7 @@ from .geo import validate_geojson
 from .raster import clip_raster
 from .sentinel2 import calculate_sentinel2_ndvi
 from .stac import DEFAULT_STAC_URL, get_stac_item
-from .paths import resolve_work_path
+from .paths import resolve_work_path, workdir_root
 
 
 class Sentinel2STACError(ValueError):
@@ -165,10 +164,16 @@ def process_sentinel2_stac_item(
     )
     aoi_clip = None
     if aoi_geojson is not None:
-        with tempfile.TemporaryDirectory(prefix="agrodigital-aoi-") as temp_dir:
-            aoi_path = Path(temp_dir) / "aoi.geojson"
-            aoi_path.write_text(json.dumps(aoi_geojson), encoding="utf-8")
-            aoi_clip = clip_raster(full_path, aoi_path, final_path, crop=True)
+        aoi_path = destination / f"{safe_id}_aoi.geojson"
+        aoi_path.write_text(json.dumps(aoi_geojson), encoding="utf-8")
+        root = workdir_root()
+        try:
+            aoi_clip = clip_raster(
+                full_path.relative_to(root), aoi_path.relative_to(root),
+                final_path.relative_to(root), crop=True,
+            )
+        finally:
+            aoi_path.unlink(missing_ok=True)
     processing = {
         "scene_ndvi": scene_processing,
         "aoi_clip": aoi_clip,
