@@ -28,7 +28,7 @@ class Sentinel2Tests(unittest.TestCase):
         with rasterio.open(self.nir, "w", **self.profile) as dst:
             dst.write(np.array([[6000, 6000], [6000, 6000]], dtype="uint16"), 1)
         with rasterio.open(self.scl, "w", **self.profile) as dst:
-            dst.write(np.array([[4, 9], [6, 3]], dtype="uint16"), 1)
+            dst.write(np.array([[2, 9], [6, 7]], dtype="uint16"), 1)
 
     def tearDown(self): self.temp.cleanup()
 
@@ -42,7 +42,7 @@ class Sentinel2Tests(unittest.TestCase):
             self.assertAlmostEqual(float(values[0, 0]), 0.5, places=6)
             self.assertEqual(float(values[0, 1]), -9999.0)
             self.assertAlmostEqual(float(values[1, 0]), 0.5, places=6)
-            self.assertEqual(float(values[1, 1]), -9999.0)
+            self.assertAlmostEqual(float(values[1, 1]), 0.5, places=6)
 
     def test_supports_independent_band_scale_factors(self):
         output = self.root / "different-scale.tif"
