@@ -36,7 +36,7 @@ def _read_json(url: str, *, data: bytes | None = None, method: str = "GET",
                  "User-Agent": f"AgroDigital-AI/{__version__}"},
     )
     try:
-        with urlopen(request, timeout=timeout) as response:
+        with opener.open(request, timeout=timeout) as response:
             result = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise STACError(f"STAC request failed: {exc}") from exc
