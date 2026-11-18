@@ -100,11 +100,13 @@ def process_sentinel2_scene(item_id: str, output_dir: str, *,
                             endpoint: str = DEFAULT_STAC_URL,
                             max_bytes_per_asset: int = 500_000_000,
                             use_scl: bool = True, overwrite: bool = False,
+                            excluded_scl_classes=(0, 1, 3, 8, 9, 10, 11),
                             aoi_geojson: dict | None = None) -> dict:
     return process_sentinel2_stac_item(
         item_id, output_dir, output_path=output_path, collection=collection,
         endpoint=endpoint, max_bytes_per_asset=max_bytes_per_asset,
-        use_scl=use_scl, overwrite=overwrite, aoi_geojson=aoi_geojson,
+        use_scl=use_scl, overwrite=overwrite, excluded_scl_classes=excluded_scl_classes,
+        aoi_geojson=aoi_geojson,
     )
 
 
