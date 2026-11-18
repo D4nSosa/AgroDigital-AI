@@ -49,3 +49,8 @@ For georeferenced rasters, GeoTIFFs and GeoJSON, pass the accessible file path o
 MCP is a standard interface, not universal execution. The AI client must support MCP, connect to this server, and have permission to access the relevant files. The initial release is local stdio, not a hosted public endpoint. Other AI clients can use the repository instructions and CLI if they provide an execution environment, but the project cannot guarantee compatibility with every model or chat product.
 
 The MCP server runs where it is configured; it does not upload user files to a cloud service. Public STAC access depends on network connectivity and provider availability. This release does not include temporal composites, yield models or validated crop recommendations.
+
+
+## Filesystem and Sentinel-2 mask defaults
+
+Package-managed local paths must be relative to `AGRODIGITAL_WORKDIR` (default `./agrodigital_work`); absolute paths, `..` and symlinks are rejected. The default Sentinel-2 SCL exclusions are classes 0, 1, 3, 8, 9, 10 and 11. Classes 2, 6 and 7 remain included by default. Configure the exclusion list through the CLI `--exclude-scl` option or the MCP `excluded_scl_classes` argument. This mask is not a guarantee of cloud-free pixels.
