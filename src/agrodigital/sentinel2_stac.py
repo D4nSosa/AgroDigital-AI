@@ -105,6 +105,7 @@ def process_sentinel2_stac_item(
     collection: str = "sentinel-2-l2a", endpoint: str = DEFAULT_STAC_URL,
     max_bytes_per_asset: int = 500_000_000, timeout: int = 60,
     use_scl: bool = True, overwrite: bool = False,
+    excluded_scl_classes=(0, 1, 3, 8, 9, 10, 11),
     aoi_geojson: dict | None = None,
 ) -> dict:
     """Download red/NIR/(optional SCL), calculate NDVI and optionally clip to a GeoJSON AOI.
@@ -160,7 +161,7 @@ def process_sentinel2_stac_item(
         scale_factor=red_params["scale_factor"],
         nir_scale_factor=nir_params["scale_factor"],
         red_offset=red_params["offset"], nir_offset=nir_params["offset"],
-        scl_path=scl_aligned_path,
+        scl_path=scl_aligned_path, excluded_scl_classes=excluded_scl_classes,
     )
     aoi_clip = None
     if aoi_geojson is not None:
