@@ -35,7 +35,7 @@ class STACTests(unittest.TestCase):
         self.assertIn("red", result["items"][0]["asset_details"])
         self.assertIn("metadata only", result["note"])
 
-    @patch("agrodigital.stac.urlopen")
+    @patch("agrodigital.stac.build_opener")
     def test_fetches_full_stac_item(self, mocked):
         item = {"id": "scene-1", "assets": {"red": {"href": "https://example.com/red.tif"}}}
         mocked.return_value.open.return_value = FakeResponse(item)
