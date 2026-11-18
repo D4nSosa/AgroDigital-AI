@@ -26,6 +26,9 @@ class MCPServerIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     "agro_inspect_raster",
                     "agro_calculate_gdd",
                     "agro_calculate_rainfall",
+                    "agro_forecast_monthly_series",
+                    "agro_detect_monthly_anomalies",
+                    "agro_summarize_sentinel2_timeseries",
                 }
                 self.assertTrue(expected.issubset(names))
 
