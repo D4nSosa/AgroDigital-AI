@@ -1,13 +1,13 @@
 # AgroDigital-AI
 
-**Python package version: 0.4.0** (single source: `src/agrodigital/__init__.py`; packaging version in `pyproject.toml` is kept in sync).
+**Python package version: 0.5.0** (single source: `src/agrodigital/__init__.py`; packaging version in `pyproject.toml` is kept in sync).
 
 
 Open AgTech and geospatial toolkit for agriculture, forestry, GIS, remote sensing, agrometeorology, precision agriculture and AI agents. It combines deterministic Python tools with an optional Model Context Protocol (MCP) server so compatible AI clients can invoke supported workflows.
 
 It is a modular workflow layer around open data and Python—not a claim that it replaces every feature of QGIS, Google Earth Engine or commercial farm-management platforms.
 
-## AI-native use (v0.4)
+## AI-native use (v0.5.0)
 
 Give an AI the repository context and attach an image or data file. For tool execution, connect the optional MCP server in an MCP-compatible client.
 
