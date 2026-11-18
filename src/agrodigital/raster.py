@@ -5,7 +5,7 @@ All raster operations are explicit about band numbers (1-based), CRS and nodata.
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path\n\nfrom .paths import resolve_work_path
 
 
 class RasterError(ValueError):
