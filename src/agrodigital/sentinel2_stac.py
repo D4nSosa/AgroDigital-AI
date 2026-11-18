@@ -11,7 +11,7 @@ from .download import download_asset
 from .geo import validate_geojson
 from .raster import clip_raster
 from .sentinel2 import calculate_sentinel2_ndvi
-from .stac import DEFAULT_STAC_URL, get_stac_item
+from .stac import DEFAULT_STAC_URL, get_stac_item\nfrom .paths import resolve_work_path
 
 
 class Sentinel2STACError(ValueError):
@@ -103,7 +103,7 @@ def _align_scl_to_red_grid(scl_path: str | Path, red_path: str | Path,
 def process_sentinel2_stac_item(
     item_id: str, output_dir: str | Path, *, output_path: str | Path | None = None,
     collection: str = "sentinel-2-l2a", endpoint: str = DEFAULT_STAC_URL,
-    max_bytes_per_asset: int = 2_000_000_000, timeout: int = 60,
+    max_bytes_per_asset: int = 500_000_000, timeout: int = 60,
     use_scl: bool = True, overwrite: bool = False,
     aoi_geojson: dict | None = None,
 ) -> dict:
@@ -150,7 +150,7 @@ def process_sentinel2_stac_item(
             destination / f"{safe_id}_scl_aligned.tif",
         )
 
-    final_path = Path(output_path) if output_path else destination / (
+    final_path = resolve_work_path(output_path, create_parent=True) if output_path else destination / (
         f"{safe_id}_ndvi_aoi.tif" if aoi_geojson is not None else f"{safe_id}_ndvi.tif"
     )
     final_path.parent.mkdir(parents=True, exist_ok=True)
