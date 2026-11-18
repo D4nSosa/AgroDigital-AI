@@ -11,7 +11,8 @@ from .download import download_asset
 from .geo import validate_geojson
 from .raster import clip_raster
 from .sentinel2 import calculate_sentinel2_ndvi
-from .stac import DEFAULT_STAC_URL, get_stac_item\nfrom .paths import resolve_work_path
+from .stac import DEFAULT_STAC_URL, get_stac_item
+from .paths import resolve_work_path
 
 
 class Sentinel2STACError(ValueError):
