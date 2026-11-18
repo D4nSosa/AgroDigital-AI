@@ -9,8 +9,6 @@ from pathlib import Path
 
 from .paths import resolve_work_path
 
-from .paths import resolve_work_path
-
 
 class RasterError(ValueError):
     """Raised for unsupported or invalid raster operations."""
